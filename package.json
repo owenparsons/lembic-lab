@@ -1,0 +1,10 @@
+{
+  "name": "dataflow",
+  "private": true,
+  "workspaces": ["frontend"],
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "frontend": "npm run dev --workspace=frontend",
+    "backend": "cd backend && python -m dataflow open --no-browser"
+  }
+}

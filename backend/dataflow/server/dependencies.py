@@ -47,7 +47,21 @@ def get_execution_log(request: Request) -> ExecutionLog:
 
 def get_cell_executor(request: Request) -> CellExecutor:
     state = get_state(request)
-    assert state.cell_executor is not None
+    if state.cell_executor is None:
+        from dataflow.services.cell_executor import CellExecutor
+        from dataflow.services.kernel_manager import KernelManager
+
+        if state.kernel_manager is None:
+            state.kernel_manager = KernelManager(str(state.project_dir))
+        assert state.file_manager is not None
+        assert state.execution_log is not None
+        assert state.ws_manager is not None
+        state.cell_executor = CellExecutor(
+            state.file_manager,
+            state.kernel_manager,
+            state.execution_log,
+            state.ws_manager,
+        )
     return state.cell_executor
 
 

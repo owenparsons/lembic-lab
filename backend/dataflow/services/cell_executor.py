@@ -8,6 +8,7 @@ from typing import Any
 
 from dataflow.models.cells import CellState
 from dataflow.models.execution import ExecutionEvent, ExecutionResult, ExecutionStatus
+from dataflow.services.ast_analyzer import analyze_cell
 from dataflow.services.execution_log import ExecutionLog
 from dataflow.services.file_manager import FileManager
 from dataflow.services.kernel_manager import KernelManager
@@ -53,6 +54,9 @@ class CellExecutor:
 
     async def _run(self, cell_id: str, source: str) -> ExecutionResult:
         """Internal: execute code and collect outputs."""
+        # AST pre-analysis for variable dependencies
+        deps = analyze_cell(source)
+
         # Notify running
         await self.ws.broadcast_kernel(
             {"type": "cell_status", "cell_id": cell_id, "state": "running"}
@@ -120,7 +124,7 @@ class CellExecutor:
             "duration_ms": duration_ms,
         })
 
-        # Log the event
+        # Log the event with variable dependency info
         from datetime import datetime, timezone
 
         event = ExecutionEvent(
@@ -128,9 +132,14 @@ class CellExecutor:
             timestamp=datetime.now(timezone.utc),
             status=status,
             duration_ms=duration_ms,
+            variables_defined=sorted(deps.variables_defined),
+            variables_read=sorted(deps.variables_read),
             error=error_info,
         )
         self.log.append(event)
+
+        # Broadcast updated cell states and warnings
+        await self._broadcast_cell_states()
 
         return ExecutionResult(
             cell_id=cell_id,
@@ -139,3 +148,23 @@ class CellExecutor:
             outputs=outputs,
             error=error_info,
         )
+
+    async def _broadcast_cell_states(self) -> None:
+        """Recompute cell states + warnings and broadcast to clients."""
+        from dataflow.services.warning_engine import compute_warnings
+
+        manifest = self.fm.load_manifest()
+        cell_ids = [e.id for e in manifest.cells]
+        events = self.log.read_all()
+
+        states, warnings = compute_warnings(
+            manifest=manifest,
+            events=events,
+            file_manager=self.fm,
+        )
+
+        await self.ws.broadcast_kernel({
+            "type": "cell_states",
+            "states": {cid: state.value for cid, state in states.items()},
+            "warnings": warnings,
+        })

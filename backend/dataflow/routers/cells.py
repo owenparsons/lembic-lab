@@ -1,5 +1,7 @@
 """Cell CRUD endpoints."""
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from dataflow.errors import CellNotFoundError
@@ -10,7 +12,8 @@ from dataflow.models.cells import (
     CellState,
     CellUpdate,
 )
-from dataflow.server.dependencies import get_file_manager
+from dataflow.server.dependencies import get_file_manager, get_state
+from dataflow.server.state import AppState
 from dataflow.services.file_manager import FileManager
 
 router = APIRouter(prefix="/api/cells", tags=["cells"])
@@ -128,3 +131,31 @@ async def move_cell(
     except CellNotFoundError:
         raise HTTPException(status_code=404, detail=f"Cell not found: {cell_id}")
     return {"status": "ok"}
+
+
+@router.get("/{cell_id}/history", response_model=list[dict[str, Any]])
+async def cell_history(
+    cell_id: str,
+    state: AppState = Depends(get_state),
+) -> list[dict[str, Any]]:
+    """Get version history for a cell."""
+    from dataflow.services.version_history import VersionHistory
+
+    vh = VersionHistory(state.project_dir)
+    return vh.list_versions(cell_id)
+
+
+@router.get("/{cell_id}/history/{timestamp}")
+async def cell_history_version(
+    cell_id: str,
+    timestamp: int,
+    state: AppState = Depends(get_state),
+) -> dict[str, Any]:
+    """Get a specific historical version of a cell."""
+    from dataflow.services.version_history import VersionHistory
+
+    vh = VersionHistory(state.project_dir)
+    content = vh.get_version(cell_id, timestamp)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Version not found")
+    return {"cell_id": cell_id, "timestamp": timestamp, "content": content}

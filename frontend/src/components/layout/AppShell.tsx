@@ -8,11 +8,13 @@ import { Toolbar } from "../toolbar/Toolbar";
 import { CellList } from "../cells/CellList";
 import { VariableExplorer } from "../panels/VariableExplorer";
 import { DataProfilePanel } from "../panels/DataProfilePanel";
+import { DependencyGraph } from "../panels/DependencyGraph";
 
 export function AppShell() {
   const paneOrder = useUiStore((s) => s.paneOrder);
   const variableExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
   const profilePanelOpen = useUiStore((s) => s.profilePanelOpen);
+  const dependencyGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
 
   const notebookPanel = (
     <Panel key="notebook" defaultSize={60} minSize={20}>
@@ -53,6 +55,11 @@ export function AppShell() {
         {profilePanelOpen && (
           <div className="w-[360px] shrink-0">
             <DataProfilePanel />
+          </div>
+        )}
+        {dependencyGraphOpen && (
+          <div className="w-[360px] shrink-0">
+            <DependencyGraph />
           </div>
         )}
       </div>

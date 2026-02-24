@@ -1,5 +1,6 @@
 import type { CellRunRequest, ExecutionResult } from "../types/execution";
-import { post } from "./api";
+import type { CellState } from "../types/cell";
+import { get, post } from "./api";
 
 export const executionApi = {
   runCell: (cellId: string) =>
@@ -13,4 +14,7 @@ export const executionApi = {
   interrupt: () => post<{ status: string }>("/kernel/interrupt"),
 
   restart: () => post<{ status: string }>("/kernel/restart"),
+
+  cellStates: () =>
+    get<{ states: Record<string, CellState>; warnings: string[] }>("/cell-states"),
 };

@@ -15,4 +15,10 @@ export const cellApi = {
 
   move: (cellId: string, data: CellMoveRequest) =>
     post<{ status: string }>(`/cells/${cellId}/move`, data),
+
+  history: (cellId: string) =>
+    get<Array<{ cell_id: string; timestamp: number; size: number }>>(`/cells/${cellId}/history`),
+
+  historyVersion: (cellId: string, timestamp: number) =>
+    get<{ cell_id: string; timestamp: number; content: string }>(`/cells/${cellId}/history/${timestamp}`),
 };

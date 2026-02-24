@@ -46,6 +46,29 @@ async def run_all(
     return await executor.execute_all()
 
 
+@router.get("/cell-states")
+async def get_cell_states(state: AppState = Depends(get_state)) -> dict:
+    """Get current cell states and warnings."""
+    from dataflow.services.warning_engine import compute_warnings
+
+    if state.file_manager is None or state.execution_log is None:
+        return {"states": {}, "warnings": []}
+
+    manifest = state.file_manager.load_manifest()
+    events = state.execution_log.read_all()
+
+    states, warnings = compute_warnings(
+        manifest=manifest,
+        events=events,
+        file_manager=state.file_manager,
+    )
+
+    return {
+        "states": {cid: s.value for cid, s in states.items()},
+        "warnings": warnings,
+    }
+
+
 @router.post("/kernel/interrupt")
 async def interrupt_kernel(state: AppState = Depends(get_state)) -> dict[str, str]:
     if state.kernel_manager is None:

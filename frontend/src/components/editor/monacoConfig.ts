@@ -1,0 +1,63 @@
+import type { editor } from "monaco-editor";
+import { THEME } from "../../constants/theme";
+
+export const DATAFLOW_DARK_THEME: editor.IStandaloneThemeData = {
+  base: "vs-dark",
+  inherit: true,
+  rules: [
+    { token: "keyword", foreground: THEME.syntax.keyword.slice(1) },
+    { token: "string", foreground: THEME.syntax.string.slice(1) },
+    { token: "comment", foreground: THEME.syntax.comment.slice(1) },
+    { token: "type", foreground: THEME.syntax.type.slice(1) },
+    { token: "number", foreground: THEME.syntax.number.slice(1) },
+    { token: "identifier", foreground: THEME.text.primary.slice(1) },
+    { token: "delimiter", foreground: THEME.text.secondary.slice(1) },
+    { token: "function", foreground: THEME.syntax.function.slice(1) },
+    { token: "variable", foreground: THEME.syntax.variable.slice(1) },
+  ],
+  colors: {
+    "editor.background": THEME.bg.tertiary,
+    "editor.foreground": THEME.text.primary,
+    "editor.lineHighlightBackground": THEME.bg.hover + "40",
+    "editor.selectionBackground": THEME.accent.primary + "33",
+    "editorCursor.foreground": THEME.accent.primary,
+    "editorLineNumber.foreground": THEME.text.muted,
+    "editorLineNumber.activeForeground": THEME.text.secondary,
+    "editor.inactiveSelectionBackground": THEME.bg.active + "40",
+    "editorWidget.background": THEME.bg.elevated,
+    "editorWidget.border": THEME.border.primary,
+    "editorSuggestWidget.background": THEME.bg.elevated,
+    "editorSuggestWidget.border": THEME.border.primary,
+    "editorSuggestWidget.selectedBackground": THEME.bg.hover,
+    "scrollbarSlider.background": THEME.border.primary + "80",
+    "scrollbarSlider.hoverBackground": THEME.text.muted + "80",
+  },
+};
+
+export const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
+  minimap: { enabled: false },
+  scrollBeyondLastLine: false,
+  wordWrap: "on",
+  lineNumbers: "on",
+  glyphMargin: false,
+  folding: false,
+  lineDecorationsWidth: 8,
+  lineNumbersMinChars: 3,
+  renderLineHighlight: "line",
+  overviewRulerLanes: 0,
+  hideCursorInOverviewRuler: true,
+  overviewRulerBorder: false,
+  scrollbar: {
+    vertical: "auto",
+    horizontal: "auto",
+    verticalScrollbarSize: 8,
+    horizontalScrollbarSize: 8,
+  },
+  padding: { top: 8, bottom: 8 },
+  fontSize: 13,
+  fontFamily: "JetBrains Mono, Fira Code, monospace",
+  fontLigatures: true,
+  tabSize: 4,
+  insertSpaces: true,
+  automaticLayout: true,
+};

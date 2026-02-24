@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Background layers */
+  --df-bg-primary: #0d1117;
+  --df-bg-secondary: #161b22;
+  --df-bg-tertiary: #1c2333;
+  --df-bg-elevated: #21283b;
+  --df-bg-hover: #292e3e;
+  --df-bg-active: #2d3548;
+
+  /* Text hierarchy */
+  --df-text-primary: #e6edf3;
+  --df-text-secondary: #9ca3b0;
+  --df-text-muted: #6b7280;
+  --df-text-disabled: #484f5a;
+
+  /* Borders */
+  --df-border-primary: #30363d;
+  --df-border-secondary: #21262d;
+  --df-border-focus: #58a6ff;
+
+  /* Accent */
+  --df-accent-primary: #58a6ff;
+  --df-accent-secondary: #3b82f6;
+
+  /* Cell execution states */
+  --df-state-idle: #6b7280;
+  --df-state-running: #58a6ff;
+  --df-state-success: #3fb950;
+  --df-state-error: #f85149;
+  --df-state-stale: #d29922;
+  --df-state-stale-upstream: #db6d28;
+
+  /* Syntax (Monaco alignment) */
+  --df-syntax-keyword: #ff7b72;
+  --df-syntax-string: #a5d6ff;
+  --df-syntax-comment: #8b949e;
+  --df-syntax-function: #d2a8ff;
+  --df-syntax-variable: #ffa657;
+  --df-syntax-number: #79c0ff;
+  --df-syntax-type: #7ee787;
+}
+
+html {
+  background-color: var(--df-bg-primary);
+  color: var(--df-text-primary);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(88, 166, 255, 0.3);
+}

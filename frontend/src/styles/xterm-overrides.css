@@ -1,0 +1,19 @@
+/* xterm.js overrides for DataFlow dark theme */
+
+.xterm {
+  padding: 8px;
+}
+
+.xterm-viewport {
+  scrollbar-width: thin;
+  scrollbar-color: var(--df-border-primary) transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--df-border-primary);
+  border-radius: 4px;
+}

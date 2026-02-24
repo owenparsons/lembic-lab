@@ -1,0 +1,13 @@
+/* Monaco editor overrides for DataFlow dark theme */
+
+.monaco-editor {
+  --vscode-editor-background: var(--df-bg-tertiary);
+}
+
+.monaco-editor .margin {
+  background-color: var(--df-bg-tertiary) !important;
+}
+
+.monaco-editor .overflow-guard {
+  border-radius: 0 0 6px 6px;
+}

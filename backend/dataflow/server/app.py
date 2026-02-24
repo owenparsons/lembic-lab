@@ -66,6 +66,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     from dataflow.routers.execution import router as execution_router
     from dataflow.routers.notebook import router as notebook_router
     from dataflow.routers.project import router as project_router
+    from dataflow.routers.profile import router as profile_router
     from dataflow.routers.variables import router as variables_router
 
     app.include_router(project_router)
@@ -73,6 +74,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     app.include_router(cells_router)
     app.include_router(execution_router)
     app.include_router(variables_router)
+    app.include_router(profile_router)
 
     # Register WebSocket endpoints
     from dataflow.ws.kernel import router as kernel_ws_router

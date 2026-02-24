@@ -1,6 +1,6 @@
 import type { CellResponse } from "../../types/cell";
 import { CellHeader } from "./CellHeader";
-import { CellOutput } from "./CellOutput";
+import { OutputRenderer } from "../output/OutputRenderer";
 import { MonacoWrapper } from "../editor/MonacoWrapper";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -50,7 +50,7 @@ export function CodeCell({ cell, isSelected, onRun }: CodeCellProps) {
           </pre>
         </div>
       )}
-      <CellOutput outputs={cell.outputs} />
+      <OutputRenderer outputs={cell.outputs} />
     </div>
   );
 }

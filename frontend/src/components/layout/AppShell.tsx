@@ -6,9 +6,13 @@ import { PaneHandle } from "./PaneHandle";
 import { StatusBar } from "./StatusBar";
 import { Toolbar } from "../toolbar/Toolbar";
 import { CellList } from "../cells/CellList";
+import { VariableExplorer } from "../panels/VariableExplorer";
+import { DataProfilePanel } from "../panels/DataProfilePanel";
 
 export function AppShell() {
   const paneOrder = useUiStore((s) => s.paneOrder);
+  const variableExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
+  const profilePanelOpen = useUiStore((s) => s.profilePanelOpen);
 
   const notebookPanel = (
     <Panel key="notebook" defaultSize={60} minSize={20}>
@@ -32,11 +36,26 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen flex-col bg-df-bg-primary">
-      <Group orientation="horizontal" className="flex-1">
-        {first}
-        <PaneHandle />
-        {second}
-      </Group>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
+          <Group orientation="horizontal" className="h-full">
+            {first}
+            <PaneHandle />
+            {second}
+          </Group>
+        </div>
+        {/* Side panels */}
+        {variableExplorerOpen && (
+          <div className="w-[320px] shrink-0">
+            <VariableExplorer />
+          </div>
+        )}
+        {profilePanelOpen && (
+          <div className="w-[360px] shrink-0">
+            <DataProfilePanel />
+          </div>
+        )}
+      </div>
       <StatusBar />
     </div>
   );

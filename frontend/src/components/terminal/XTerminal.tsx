@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
@@ -6,7 +6,11 @@ import { XTERM_THEME } from "../../constants/theme";
 import { useTerminalStore } from "../../stores/terminalStore";
 import "@xterm/xterm/css/xterm.css";
 
-export function XTerminal() {
+interface XTerminalProps {
+  onSendRef?: MutableRefObject<((message: string) => void) | null>;
+}
+
+export function XTerminal({ onSendRef }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -56,6 +60,14 @@ export function XTerminal() {
       const dims = fitAddon.proposeDimensions();
       if (dims) {
         ws.send(JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }));
+      }
+      // Expose send function for injection bar
+      if (onSendRef) {
+        onSendRef.current = (message: string) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "inject", message }));
+          }
+        };
       }
     };
 

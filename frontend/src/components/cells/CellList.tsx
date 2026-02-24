@@ -2,6 +2,7 @@ import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
 import { CodeCell } from "./CodeCell";
 import { MarkdownCell } from "./MarkdownCell";
+import { DefineCell } from "./DefineCell";
 import { AddCellButton } from "./AddCellButton";
 import { executionApi } from "../../services/executionApi";
 import { Plus } from "lucide-react";
@@ -76,6 +77,8 @@ export function CellList() {
           >
             {cell.type === "markdown" ? (
               <MarkdownCell {...commonProps} />
+            ) : cell.type === "define" ? (
+              <DefineCell {...commonProps} />
             ) : (
               <CodeCell {...commonProps} />
             )}

@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { useNotebookStore } from "./stores/notebookStore";
 import { useKernelSocket } from "./hooks/useKernelSocket";
+import { useFileWatcherSocket } from "./hooks/useFileWatcherSocket";
 
 function App() {
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
 
-  // Connect kernel WebSocket
+  // Connect WebSockets
   useKernelSocket();
+  useFileWatcherSocket();
 
   useEffect(() => {
     loadNotebook();

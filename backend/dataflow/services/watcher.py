@@ -75,12 +75,19 @@ class DebouncedHandler(FileSystemEventHandler):
 
         loop = self._get_loop()
 
+        # Schedule the debounce logic on the event loop thread
+        # (watchdog fires events from a background thread, and
+        # call_later / TimerHandle.cancel are not thread-safe)
+        loop.call_soon_threadsafe(self._schedule, path, loop)
+
+    def _schedule(self, path: str, loop: asyncio.AbstractEventLoop) -> None:
+        """Must run on the event loop thread."""
         # Cancel existing timer
         if path in self._timers:
             self._timers[path].cancel()
 
         def fire() -> None:
-            del self._timers[path]
+            self._timers.pop(path, None)
             # Check content hash
             new_hash = self._compute_hash(path)
             if new_hash is None:

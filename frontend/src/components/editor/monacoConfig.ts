@@ -1,7 +1,7 @@
 import type { editor } from "monaco-editor";
 import { THEME } from "../../constants/theme";
 
-export const DATAFLOW_DARK_THEME: editor.IStandaloneThemeData = {
+export const LEMBIC_DARK_THEME: editor.IStandaloneThemeData = {
   base: "vs-dark",
   inherit: true,
   rules: [

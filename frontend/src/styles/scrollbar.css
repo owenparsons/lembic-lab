@@ -10,12 +10,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--df-border-primary);
+  background: var(--lb-border-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--df-text-muted);
+  background: var(--lb-text-muted);
 }
 
 ::-webkit-scrollbar-corner {
@@ -25,5 +25,5 @@
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--df-border-primary) transparent;
+  scrollbar-color: var(--lb-border-primary) transparent;
 }

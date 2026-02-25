@@ -5,16 +5,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from dataflow.errors import CellNotFoundError
-from dataflow.models.cells import CellType
-from dataflow.services.file_manager import FileManager
+from lembic.errors import CellNotFoundError
+from lembic.models.cells import CellType
+from lembic.services.file_manager import FileManager
 
 
 @pytest.fixture
 def fm(tmp_path: Path) -> FileManager:
     """Create a FileManager with a temp project directory."""
     (tmp_path / "cells").mkdir()
-    (tmp_path / "dataflow.yaml").write_text(yaml.dump({"cells": []}))
+    (tmp_path / "notebook.yaml").write_text(yaml.dump({"cells": []}))
     return FileManager(tmp_path)
 
 

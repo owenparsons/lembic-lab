@@ -12,12 +12,12 @@ export function ErrorOutput({ ename, evalue, traceback }: ErrorOutputProps) {
   const strippedTraceback = traceback.map(stripAnsi);
 
   return (
-    <div className="rounded bg-df-state-error/10 p-3">
-      <div className="font-mono text-xs font-semibold text-df-state-error">
+    <div className="rounded bg-lb-state-error/10 p-3">
+      <div className="font-mono text-xs font-semibold text-lb-state-error">
         {ename}: {evalue}
       </div>
       {strippedTraceback.length > 0 && (
-        <pre className="mt-2 whitespace-pre-wrap font-mono text-xs leading-5 text-df-text-secondary">
+        <pre className="mt-2 whitespace-pre-wrap font-mono text-xs leading-5 text-lb-text-secondary">
           {strippedTraceback.join("\n")}
         </pre>
       )}

@@ -9,7 +9,7 @@ export function CellOutput({ outputs }: CellOutputProps) {
   if (outputs.length === 0) return null;
 
   return (
-    <div className="border-t border-df-border-secondary bg-df-bg-primary px-3 py-2">
+    <div className="border-t border-lb-border-secondary bg-lb-bg-primary px-3 py-2">
       {outputs.map((output, i) => (
         <OutputItem key={i} output={output} />
       ))}
@@ -23,7 +23,7 @@ function OutputItem({ output }: { output: CellOutputType }) {
       return (
         <pre
           className={`whitespace-pre-wrap font-mono text-xs ${
-            output.stream === "stderr" ? "text-df-state-error" : "text-df-text-primary"
+            output.stream === "stderr" ? "text-lb-state-error" : "text-lb-text-primary"
           }`}
         >
           {output.text}
@@ -52,7 +52,7 @@ function OutputItem({ output }: { output: CellOutputType }) {
       if (mime === "text/html") {
         return (
           <div
-            className="max-w-full overflow-auto text-xs text-df-text-primary"
+            className="max-w-full overflow-auto text-xs text-lb-text-primary"
             dangerouslySetInnerHTML={{ __html: output.data["text/html"] as string }}
           />
         );
@@ -60,14 +60,14 @@ function OutputItem({ output }: { output: CellOutputType }) {
 
       if (mime === "text/plain") {
         return (
-          <pre className="whitespace-pre-wrap font-mono text-xs text-df-text-primary">
+          <pre className="whitespace-pre-wrap font-mono text-xs text-lb-text-primary">
             {output.data["text/plain"] as string}
           </pre>
         );
       }
 
       return (
-        <pre className="whitespace-pre-wrap font-mono text-xs text-df-text-muted">
+        <pre className="whitespace-pre-wrap font-mono text-xs text-lb-text-muted">
           [{mime}]
         </pre>
       );
@@ -75,12 +75,12 @@ function OutputItem({ output }: { output: CellOutputType }) {
 
     case "error":
       return (
-        <div className="rounded bg-df-state-error/10 p-2">
-          <pre className="whitespace-pre-wrap font-mono text-xs text-df-state-error">
+        <div className="rounded bg-lb-state-error/10 p-2">
+          <pre className="whitespace-pre-wrap font-mono text-xs text-lb-state-error">
             {output.ename}: {output.evalue}
           </pre>
           {output.traceback.length > 0 && (
-            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs text-df-text-secondary">
+            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs text-lb-text-secondary">
               {output.traceback.join("\n")}
             </pre>
           )}

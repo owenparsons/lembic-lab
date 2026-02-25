@@ -1,9 +1,9 @@
 """Tests for Pydantic models serialization/deserialization."""
 
-from dataflow.models.cells import CellCreate, CellEntry, CellResponse, CellState, CellType
-from dataflow.models.execution import ExecutionEvent, ExecutionResult, ExecutionStatus
-from dataflow.models.notebook import NotebookManifest, NotebookResponse
-from dataflow.models.ws_messages import (
+from lembic.models.cells import CellCreate, CellEntry, CellResponse, CellState, CellType
+from lembic.models.execution import ExecutionEvent, ExecutionResult, ExecutionStatus
+from lembic.models.notebook import NotebookManifest, NotebookResponse
+from lembic.models.ws_messages import (
     CellStatusMessage,
     DisplayDataMessage,
     ErrorMessage,

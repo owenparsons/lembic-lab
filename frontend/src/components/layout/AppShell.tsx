@@ -37,7 +37,7 @@ export function AppShell() {
   const second = paneOrder === "notebook-terminal" ? terminalPanel : notebookPanel;
 
   return (
-    <div className="flex h-screen flex-col bg-df-bg-primary">
+    <div className="flex h-screen flex-col bg-lb-bg-primary">
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-hidden">
           <Group orientation="horizontal" className="h-full">

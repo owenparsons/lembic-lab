@@ -1,6 +1,6 @@
-# DataFlow
+# Lembic Lab
 
-A browser-based data science notebook environment designed for use with Claude Code. The key insight: CC is the primary code author, and the project structure (file-per-cell, manifest-driven, `lib/` function library) is optimised for CC to read, write, and navigate. The notebook provides the visual feedback loop (plots, tables, profiles) and the terminal pane gives CC direct access.
+A browser-based data science notebook environment designed for use with Claude Code. Named after the *alembic* — the vessel medieval alchemists used for distillation — Lembic transforms raw data into refined insight. The project structure (file-per-cell, manifest-driven, `lib/` function library) is optimised for CC to read, write, and navigate. The notebook provides the visual feedback loop (plots, tables, profiles) and the terminal pane gives CC direct access.
 
 ## Quick Start
 
@@ -28,11 +28,11 @@ cd ../frontend && npm install
 **Create a new project:**
 
 ```bash
-dataflow init my-analysis
+lembic init my-analysis
 cd my-analysis
 ```
 
-This scaffolds a project directory:
+This scaffolds a lembic notebook:
 
 ```
 my-analysis/
@@ -42,9 +42,9 @@ my-analysis/
 ├── outputs/
 │   ├── plots/
 │   └── tables/
-├── .dataflow/
+├── .notebook/
 │   └── history/        # Version history
-├── dataflow.yaml       # Manifest (cell order + metadata)
+├── notebook.yaml       # Manifest (cell order + metadata)
 ├── CLAUDE.md           # Context file for CC
 └── .gitignore
 ```
@@ -52,24 +52,24 @@ my-analysis/
 **Start the notebook:**
 
 ```bash
-dataflow open
+lembic open
 ```
 
 This starts the backend (port 8000) and opens your browser. To start without opening a browser:
 
 ```bash
-dataflow open --no-browser --port 8001
+lembic open --no-browser --port 8001
 ```
 
 **Run a cell headlessly (for CC autonomous iteration):**
 
 ```bash
-dataflow run-cell <cell_id>
+lembic run-cell <cell_id>
 ```
 
 ### Development
 
-To work on DataFlow itself, start both servers from the repo root:
+To work on Lembic itself, start both servers from the repo root:
 
 ```bash
 npm run dev
@@ -91,7 +91,7 @@ cd frontend && npm run typecheck
 
 ## Architecture
 
-DataFlow is a monorepo with two packages:
+Lembic is a monorepo with two packages:
 
 - **`backend/`** — FastAPI + Python: kernel management, cell execution, file I/O, WebSocket streaming
 - **`frontend/`** — React 18 + Vite + TypeScript: notebook UI, Monaco editor, xterm.js terminal
@@ -99,7 +99,7 @@ DataFlow is a monorepo with two packages:
 ### How It Works
 
 1. Each notebook cell is a file on disk (`cells/{id}_{name}.py`)
-2. A YAML manifest (`dataflow.yaml`) defines cell order and metadata
+2. A YAML manifest (`notebook.yaml`) defines cell order and metadata
 3. The backend manages a Jupyter kernel for code execution
 4. Execution outputs stream to the frontend via WebSocket in real-time
 5. A file watcher detects external changes (e.g., CC editing files) and syncs the UI
@@ -108,7 +108,7 @@ DataFlow is a monorepo with two packages:
 ### Key Design Decisions
 
 - **File-per-cell**: Every cell is a standalone `.py` or `.md` file. CC can read and edit them directly.
-- **Manifest-driven**: `dataflow.yaml` is the source of truth for cell order and metadata.
+- **Manifest-driven**: `notebook.yaml` is the source of truth for cell order and metadata.
 - **Lazy kernel**: The Jupyter kernel only starts on first execution, keeping startup instant.
 - **WebSocket streaming**: Execution output is streamed in real-time, not buffered.
 - **Dark-mode-first**: The entire UI is designed around a dark color palette with CSS custom properties.

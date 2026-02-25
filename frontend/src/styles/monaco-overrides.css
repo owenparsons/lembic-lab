@@ -1,11 +1,11 @@
-/* Monaco editor overrides for DataFlow dark theme */
+/* Monaco editor overrides for Lembic dark theme */
 
 .monaco-editor {
-  --vscode-editor-background: var(--df-bg-tertiary);
+  --vscode-editor-background: var(--lb-bg-tertiary);
 }
 
 .monaco-editor .margin {
-  background-color: var(--df-bg-tertiary) !important;
+  background-color: var(--lb-bg-tertiary) !important;
 }
 
 .monaco-editor .overflow-guard {

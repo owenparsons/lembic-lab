@@ -4,11 +4,11 @@ from datetime import datetime, timezone
 
 import pytest
 
-from dataflow.models.cells import CellEntry, CellState, CellType
-from dataflow.models.execution import ExecutionEvent, ExecutionStatus
-from dataflow.models.notebook import NotebookManifest
-from dataflow.services.file_manager import FileManager
-from dataflow.services.warning_engine import compute_warnings
+from lembic.models.cells import CellEntry, CellState, CellType
+from lembic.models.execution import ExecutionEvent, ExecutionStatus
+from lembic.models.notebook import NotebookManifest
+from lembic.services.file_manager import FileManager
+from lembic.services.warning_engine import compute_warnings
 
 
 @pytest.fixture

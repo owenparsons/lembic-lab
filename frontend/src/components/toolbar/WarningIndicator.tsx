@@ -9,7 +9,7 @@ export function WarningIndicator() {
 
   return (
     <Tooltip content={`${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}>
-      <div className="flex items-center gap-1 rounded px-2 py-1 text-xs text-df-state-stale">
+      <div className="flex items-center gap-1 rounded px-2 py-1 text-xs text-lb-state-stale">
         <AlertTriangle size={14} />
         <span>{warnings.length}</span>
       </div>

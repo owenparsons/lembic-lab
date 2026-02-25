@@ -4,18 +4,18 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Accept project dir as argument or env var, default to cwd
-PROJECT_DIR="${1:-${DATAFLOW_PROJECT_DIR:-$(pwd)}}"
+PROJECT_DIR="${1:-${LEMBIC_PROJECT_DIR:-$(pwd)}}"
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
-# Verify it looks like a dataflow project
-if [ ! -f "$PROJECT_DIR/dataflow.yaml" ]; then
-    echo "Error: $PROJECT_DIR does not contain a dataflow.yaml"
+# Verify it looks like a lembic project
+if [ ! -f "$PROJECT_DIR/notebook.yaml" ]; then
+    echo "Error: $PROJECT_DIR does not contain a notebook.yaml"
     echo ""
     echo "Usage: ./scripts/dev.sh <project-dir>"
-    echo "   or: DATAFLOW_PROJECT_DIR=/path/to/project npm run dev"
+    echo "   or: LEMBIC_PROJECT_DIR=/path/to/project npm run dev"
     echo ""
-    echo "Create a project first: cd backend && uv run dataflow init my-project"
-    echo "Projects are stored in: ~/Dataflow/"
+    echo "Create a project first: cd backend && uv run lembic init my-project"
+    echo "Projects are stored in: ~/Lembic/"
     exit 1
 fi
 
@@ -65,7 +65,7 @@ echo -e "${GREEN}[project]${NC} $PROJECT_DIR"
 echo -e "${GREEN}[backend]${NC} Starting uvicorn on :8000..."
 (
     cd "$ROOT_DIR/backend"
-    DATAFLOW_PROJECT_DIR="$PROJECT_DIR" uv run uvicorn dataflow.server.app:create_app --factory --host 0.0.0.0 --port 8000 --reload 2>&1 | sed "s/^/$(printf "${GREEN}[backend]${NC} ")/"
+    LEMBIC_PROJECT_DIR="$PROJECT_DIR" uv run uvicorn lembic.server.app:create_app --factory --host 0.0.0.0 --port 8000 --reload 2>&1 | sed "s/^/$(printf "${GREEN}[backend]${NC} ")/"
 ) &
 BACKEND_PID=$!
 

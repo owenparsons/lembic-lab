@@ -32,20 +32,20 @@ export function ConflictDialog({
     <Modal open={true} onClose={onDismiss} title={`Conflict in "${cellName}"`}>
       <div className="w-[800px] max-w-[90vw]">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-df-border-primary px-4 py-3">
-          <AlertTriangle size={18} className="text-df-state-stale" />
+        <div className="flex items-center gap-3 border-b border-lb-border-primary px-4 py-3">
+          <AlertTriangle size={18} className="text-lb-state-stale" />
           <div>
-            <h2 className="text-sm font-semibold text-df-text-primary">
+            <h2 className="text-sm font-semibold text-lb-text-primary">
               Conflict in "{cellName}"
             </h2>
-            <p className="text-xs text-df-text-muted">
+            <p className="text-xs text-lb-text-muted">
               This cell was modified externally while you had unsaved changes.
             </p>
           </div>
         </div>
 
         {/* View tabs */}
-        <div className="flex gap-1 border-b border-df-border-primary px-4 py-1.5">
+        <div className="flex gap-1 border-b border-lb-border-primary px-4 py-1.5">
           {(
             [
               ["side-by-side", "Side by Side"],
@@ -58,8 +58,8 @@ export function ConflictDialog({
               onClick={() => setView(key)}
               className={`rounded px-2 py-1 text-xs transition-colors ${
                 view === key
-                  ? "bg-df-accent-primary/20 text-df-accent-primary"
-                  : "text-df-text-muted hover:text-df-text-primary"
+                  ? "bg-lb-accent-primary/20 text-lb-accent-primary"
+                  : "text-lb-text-muted hover:text-lb-text-primary"
               }`}
             >
               {label}
@@ -72,46 +72,46 @@ export function ConflictDialog({
           {view === "side-by-side" ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="mb-1 text-xs font-semibold text-df-text-secondary">
+                <div className="mb-1 text-xs font-semibold text-lb-text-secondary">
                   Your Version
                 </div>
-                <pre className="rounded border border-df-border-primary bg-df-bg-tertiary p-2 text-xs text-df-text-primary">
+                <pre className="rounded border border-lb-border-primary bg-lb-bg-tertiary p-2 text-xs text-lb-text-primary">
                   {localContent}
                 </pre>
               </div>
               <div>
-                <div className="mb-1 text-xs font-semibold text-df-text-secondary">
+                <div className="mb-1 text-xs font-semibold text-lb-text-secondary">
                   External Version
                 </div>
-                <pre className="rounded border border-df-border-primary bg-df-bg-tertiary p-2 text-xs text-df-text-primary">
+                <pre className="rounded border border-lb-border-primary bg-lb-bg-tertiary p-2 text-xs text-lb-text-primary">
                   {externalContent}
                 </pre>
               </div>
             </div>
           ) : (
-            <pre className="rounded border border-df-border-primary bg-df-bg-tertiary p-2 text-xs text-df-text-primary">
+            <pre className="rounded border border-lb-border-primary bg-lb-bg-tertiary p-2 text-xs text-lb-text-primary">
               {view === "local" ? localContent : externalContent}
             </pre>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 border-t border-df-border-primary px-4 py-3">
+        <div className="flex justify-end gap-2 border-t border-lb-border-primary px-4 py-3">
           <button
             onClick={onDismiss}
-            className="rounded px-3 py-1.5 text-xs text-df-text-muted transition-colors hover:bg-df-bg-hover hover:text-df-text-primary"
+            className="rounded px-3 py-1.5 text-xs text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary"
           >
             Dismiss
           </button>
           <button
             onClick={onAcceptExternal}
-            className="rounded border border-df-border-primary bg-df-bg-secondary px-3 py-1.5 text-xs text-df-text-primary transition-colors hover:bg-df-bg-hover"
+            className="rounded border border-lb-border-primary bg-lb-bg-secondary px-3 py-1.5 text-xs text-lb-text-primary transition-colors hover:bg-lb-bg-hover"
           >
             Accept External
           </button>
           <button
             onClick={onAcceptLocal}
-            className="rounded bg-df-accent-secondary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-df-accent-primary"
+            className="rounded bg-lb-accent-secondary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-lb-accent-primary"
           >
             Keep Mine
           </button>

@@ -37,16 +37,16 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
   return (
     <div
       ref={ref}
-      className="fixed z-50 min-w-[160px] rounded-md border border-df-border-primary bg-df-bg-elevated py-1 shadow-xl"
+      className="fixed z-50 min-w-[160px] rounded-md border border-lb-border-primary bg-lb-bg-elevated py-1 shadow-xl"
       style={{ left: x, top: y }}
     >
       {items.map((item, i) =>
         item.separator ? (
-          <div key={i} className="my-1 h-px bg-df-border-secondary" />
+          <div key={i} className="my-1 h-px bg-lb-border-secondary" />
         ) : (
           <button
             key={i}
-            className="w-full px-3 py-1.5 text-left text-sm text-df-text-primary hover:bg-df-bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full px-3 py-1.5 text-left text-sm text-lb-text-primary hover:bg-lb-bg-hover disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={() => {
               item.onClick();
               onClose();

@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dataflow"
+name = "lembic"
 version = "0.1.0"
 description = "Browser-based data science notebook environment"
 requires-python = ">=3.11"
@@ -27,11 +27,11 @@ dev = [
 ]
 
 [project.scripts]
-dataflow = "dataflow.cli:cli"
+lembic = "lembic.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["dataflow*"]
+include = ["lembic*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -75,7 +75,7 @@ export function HtmlOutput({ html }: HtmlOutputProps) {
   return (
     <iframe
       ref={iframeRef}
-      className="w-full rounded border border-df-border-secondary"
+      className="w-full rounded border border-lb-border-secondary"
       style={{ height: `${height}px` }}
       sandbox="allow-scripts allow-same-origin"
       title="HTML output"

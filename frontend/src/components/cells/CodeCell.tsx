@@ -39,13 +39,13 @@ export function CodeCell({ cell, isSelected, onRun }: CodeCellProps) {
         />
       ) : (
         <div
-          className="cursor-pointer rounded-b-md bg-df-bg-tertiary px-3 py-2"
+          className="cursor-pointer rounded-b-md bg-lb-bg-tertiary px-3 py-2"
           onClick={() => {
             selectCell(cell.id);
             setMode("edit");
           }}
         >
-          <pre className="whitespace-pre-wrap font-mono text-xs text-df-text-primary">
+          <pre className="whitespace-pre-wrap font-mono text-xs text-lb-text-primary">
             {content || "\u00A0"}
           </pre>
         </div>

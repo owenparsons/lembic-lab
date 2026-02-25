@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from dataflow.models.cells import CellState
-from dataflow.models.execution import ExecutionEvent, ExecutionStatus
-from dataflow.services.execution_log import ExecutionLog
+from lembic.models.cells import CellState
+from lembic.models.execution import ExecutionEvent, ExecutionStatus
+from lembic.services.execution_log import ExecutionLog
 
 
 @pytest.fixture

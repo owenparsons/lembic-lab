@@ -31,7 +31,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {children}
       {visible && (
         <div
-          className={`absolute z-50 whitespace-nowrap rounded bg-df-bg-elevated px-2 py-1 text-xs text-df-text-primary shadow-lg border border-df-border-secondary ${positionClasses[position]}`}
+          className={`absolute z-50 whitespace-nowrap rounded bg-lb-bg-elevated px-2 py-1 text-xs text-lb-text-primary shadow-lg border border-lb-border-secondary ${positionClasses[position]}`}
         >
           {content}
         </div>

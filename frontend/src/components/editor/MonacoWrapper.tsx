@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
 import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { DATAFLOW_DARK_THEME, EDITOR_OPTIONS } from "./monacoConfig";
+import { LEMBIC_DARK_THEME, EDITOR_OPTIONS } from "./monacoConfig";
 
 interface MonacoWrapperProps {
   value: string;
@@ -28,7 +28,7 @@ export function MonacoWrapper({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleBeforeMount: BeforeMount = useCallback((monaco) => {
-    monaco.editor.defineTheme("dataflow-dark", DATAFLOW_DARK_THEME);
+    monaco.editor.defineTheme("lembic-dark", LEMBIC_DARK_THEME);
   }, []);
 
   const handleMount: OnMount = useCallback(
@@ -55,7 +55,7 @@ export function MonacoWrapper({
       // Keybindings
       if (onRun) {
         editor.addAction({
-          id: "dataflow-run-cell",
+          id: "lembic-run-cell",
           label: "Run Cell",
           keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
           run: () => onRun(),
@@ -64,7 +64,7 @@ export function MonacoWrapper({
 
       if (onRunAndAdvance) {
         editor.addAction({
-          id: "dataflow-run-and-advance",
+          id: "lembic-run-and-advance",
           label: "Run Cell and Advance",
           keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
           run: () => onRunAndAdvance(),
@@ -73,7 +73,7 @@ export function MonacoWrapper({
 
       if (onEscape) {
         editor.addAction({
-          id: "dataflow-escape",
+          id: "lembic-escape",
           label: "Exit Edit Mode",
           keybindings: [monaco.KeyCode.Escape],
           run: () => onEscape(),
@@ -89,7 +89,7 @@ export function MonacoWrapper({
         value={value}
         onChange={(v) => onChange(v ?? "")}
         language={language}
-        theme="dataflow-dark"
+        theme="lembic-dark"
         options={{
           ...EDITOR_OPTIONS,
           readOnly,

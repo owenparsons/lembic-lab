@@ -35,7 +35,7 @@ export function InjectionBar({ onSend }: InjectionBarProps) {
   };
 
   return (
-    <div className="border-t border-df-border-secondary bg-df-bg-secondary p-2">
+    <div className="border-t border-lb-border-secondary bg-lb-bg-secondary p-2">
       {attachments.length > 0 && (
         <div className="mb-1.5 flex flex-wrap gap-1">
           {attachments.map((att) => (
@@ -54,7 +54,7 @@ export function InjectionBar({ onSend }: InjectionBarProps) {
           onKeyDown={handleKeyDown}
           placeholder="Message to CC..."
           rows={1}
-          className="flex-1 resize-none rounded border border-df-border-primary bg-df-bg-tertiary px-2 py-1.5 text-xs text-df-text-primary placeholder:text-df-text-muted focus:border-df-border-focus focus:outline-none"
+          className="flex-1 resize-none rounded border border-lb-border-primary bg-lb-bg-tertiary px-2 py-1.5 text-xs text-lb-text-primary placeholder:text-lb-text-muted focus:border-lb-border-focus focus:outline-none"
         />
         <IconButton icon={Send} label="Send" onClick={handleSend} />
       </div>

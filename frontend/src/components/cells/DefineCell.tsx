@@ -25,18 +25,18 @@ export function DefineCell({ cell, isSelected, onRun }: DefineCellProps) {
     <div>
       <CellHeader cell={cell} onRun={onRun} isSelected={isSelected} />
       <div
-        className="flex cursor-pointer items-center gap-2 rounded-b-md bg-df-bg-secondary px-3 py-2"
+        className="flex cursor-pointer items-center gap-2 rounded-b-md bg-lb-bg-secondary px-3 py-2"
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? (
-          <ChevronDown size={14} className="text-df-text-muted" />
+          <ChevronDown size={14} className="text-lb-text-muted" />
         ) : (
-          <ChevronRight size={14} className="text-df-text-muted" />
+          <ChevronRight size={14} className="text-lb-text-muted" />
         )}
-        <span className="font-mono text-xs text-df-syntax-function">
+        <span className="font-mono text-xs text-lb-syntax-function">
           DEFINE
         </span>
-        <span className="font-mono text-xs text-df-text-primary">
+        <span className="font-mono text-xs text-lb-text-primary">
           {fnName}()
         </span>
       </div>

@@ -56,7 +56,7 @@ export function ExecutionControls() {
         onClick={handleRunAll}
         disabled={isBusy}
       />
-      <div className="mx-1 h-4 w-px bg-df-border-secondary" />
+      <div className="mx-1 h-4 w-px bg-lb-border-secondary" />
       <ToolbarButton
         icon={Square}
         label="Interrupt kernel"

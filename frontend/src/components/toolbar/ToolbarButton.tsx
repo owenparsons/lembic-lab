@@ -12,7 +12,7 @@ export function ToolbarButton({ icon: Icon, label, active, className = "", ...pr
     <Tooltip content={label}>
       <button
         aria-label={label}
-        className={`inline-flex items-center justify-center rounded p-1.5 text-df-text-secondary transition-colors hover:bg-df-bg-hover hover:text-df-text-primary disabled:opacity-40 disabled:cursor-not-allowed ${active ? "bg-df-bg-active text-df-accent-primary" : ""} ${className}`}
+        className={`inline-flex items-center justify-center rounded p-1.5 text-lb-text-secondary transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary disabled:opacity-40 disabled:cursor-not-allowed ${active ? "bg-lb-bg-active text-lb-accent-primary" : ""} ${className}`}
         {...props}
       >
         <Icon size={16} />

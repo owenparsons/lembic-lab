@@ -13,7 +13,7 @@ export function TextOutput({ text, stream }: TextOutputProps) {
   return (
     <pre
       className={`whitespace-pre-wrap font-mono text-xs leading-5 ${
-        stream === "stderr" ? "text-df-state-error" : "text-df-text-primary"
+        stream === "stderr" ? "text-lb-state-error" : "text-lb-text-primary"
       }`}
     >
       {stripped}

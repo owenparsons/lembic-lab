@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from dataflow.services.version_history import VersionHistory
+from lembic.services.version_history import VersionHistory
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 """Tests for the AST analyzer service."""
 
-from dataflow.services.ast_analyzer import analyze_cell
+from lembic.services.ast_analyzer import analyze_cell
 
 
 def test_simple_assignment():

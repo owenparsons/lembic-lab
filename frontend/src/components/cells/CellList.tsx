@@ -23,7 +23,7 @@ export function CellList() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-df-text-muted">
+      <div className="flex h-full items-center justify-center text-lb-text-muted">
         Loading notebook...
       </div>
     );
@@ -31,12 +31,12 @@ export function CellList() {
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-df-text-muted">
-        <p className="text-df-state-error">{error}</p>
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-lb-text-muted">
+        <p className="text-lb-state-error">{error}</p>
         <p className="text-sm">Make sure the backend is running on port 8000</p>
         <button
           onClick={() => loadNotebook()}
-          className="flex items-center gap-2 rounded-md border border-df-border-primary bg-df-bg-secondary px-4 py-2 text-sm text-df-text-primary transition-colors hover:bg-df-bg-hover"
+          className="flex items-center gap-2 rounded-md border border-lb-border-primary bg-lb-bg-secondary px-4 py-2 text-sm text-lb-text-primary transition-colors hover:bg-lb-bg-hover"
         >
           <RefreshCw size={16} />
           Retry
@@ -47,7 +47,7 @@ export function CellList() {
 
   if (cells.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-df-text-muted">
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-lb-text-muted">
         <p>No cells yet</p>
         <button
           onClick={async () => {
@@ -57,7 +57,7 @@ export function CellList() {
               setMode("edit");
             }
           }}
-          className="flex items-center gap-2 rounded-md border border-df-border-primary bg-df-bg-secondary px-4 py-2 text-sm text-df-text-primary transition-colors hover:bg-df-bg-hover"
+          className="flex items-center gap-2 rounded-md border border-lb-border-primary bg-lb-bg-secondary px-4 py-2 text-sm text-lb-text-primary transition-colors hover:bg-lb-bg-hover"
         >
           <Plus size={16} />
           Add first cell
@@ -88,7 +88,7 @@ export function CellList() {
             </button>
             <button
               onClick={() => setPendingRefresh(false)}
-              className="rounded bg-df-bg-secondary px-3 py-1 text-xs font-medium text-df-text-secondary transition-colors hover:bg-df-bg-hover"
+              className="rounded bg-lb-bg-secondary px-3 py-1 text-xs font-medium text-lb-text-secondary transition-colors hover:bg-lb-bg-hover"
             >
               Dismiss
             </button>
@@ -110,8 +110,8 @@ export function CellList() {
             onClick={() => selectCell(cell.id)}
             className={`rounded-md border transition-colors ${
               isSelected
-                ? "border-df-accent-primary/50"
-                : "border-df-border-primary hover:border-df-border-primary/80"
+                ? "border-lb-accent-primary/50"
+                : "border-lb-border-primary hover:border-lb-border-primary/80"
             }`}
           >
             {cell.type === "markdown" ? (

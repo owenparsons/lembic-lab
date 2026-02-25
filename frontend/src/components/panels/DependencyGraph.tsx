@@ -155,18 +155,18 @@ export function DependencyGraph() {
   );
 
   return (
-    <div className="flex h-full flex-col border-l border-df-border-primary bg-df-bg-secondary">
+    <div className="flex h-full flex-col border-l border-lb-border-primary bg-lb-bg-secondary">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-df-border-primary px-3 py-2">
+      <div className="flex items-center justify-between border-b border-lb-border-primary px-3 py-2">
         <div className="flex items-center gap-2">
-          <GitBranch size={14} className="text-df-accent-primary" />
-          <span className="text-xs font-semibold text-df-text-primary">
+          <GitBranch size={14} className="text-lb-accent-primary" />
+          <span className="text-xs font-semibold text-lb-text-primary">
             Dependencies
           </span>
         </div>
         <button
           onClick={toggleDependencyGraph}
-          className="rounded p-1 text-df-text-muted transition-colors hover:bg-df-bg-hover hover:text-df-text-primary"
+          className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary"
           title="Close"
         >
           <X size={13} />
@@ -176,7 +176,7 @@ export function DependencyGraph() {
       {/* Graph */}
       <div className="flex-1 overflow-auto p-2">
         {nodes.length === 0 ? (
-          <div className="py-4 text-center text-xs text-df-text-muted">
+          <div className="py-4 text-center text-xs text-lb-text-muted">
             Run cells to see dependency graph
           </div>
         ) : (
@@ -223,7 +223,7 @@ export function DependencyGraph() {
                     x={midX}
                     y={(y1 + y2) / 2 - 4}
                     textAnchor="middle"
-                    className="text-[9px] fill-df-text-muted"
+                    className="text-[9px] fill-lb-text-muted"
                   >
                     {edge.variable}
                   </text>
@@ -246,7 +246,7 @@ export function DependencyGraph() {
                     width={NODE_WIDTH}
                     height={NODE_HEIGHT}
                     rx="6"
-                    className="fill-df-bg-tertiary stroke-df-border-primary"
+                    className="fill-lb-bg-tertiary stroke-lb-border-primary"
                     strokeWidth="1"
                   />
                   {/* State indicator */}
@@ -259,7 +259,7 @@ export function DependencyGraph() {
                   <text
                     x={node.x + 22}
                     y={node.y + NODE_HEIGHT / 2 + 4}
-                    className="text-[10px] fill-df-text-primary"
+                    className="text-[10px] fill-lb-text-primary"
                   >
                     {node.name.length > 12
                       ? node.name.slice(0, 10) + "..."

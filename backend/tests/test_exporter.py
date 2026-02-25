@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from dataflow.models.export import ExportFormat
-from dataflow.services.exporter import Exporter
-from dataflow.services.file_manager import FileManager
+from lembic.models.export import ExportFormat
+from lembic.services.exporter import Exporter
+from lembic.services.file_manager import FileManager
 
 
 @pytest.fixture

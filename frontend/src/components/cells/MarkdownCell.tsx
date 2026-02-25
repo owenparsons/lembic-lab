@@ -34,13 +34,13 @@ export function MarkdownCell({ cell, isSelected, onRun }: MarkdownCellProps) {
         />
       ) : (
         <div
-          className="prose prose-invert max-w-none cursor-pointer rounded-b-md bg-df-bg-secondary px-4 py-3 text-sm text-df-text-primary"
+          className="prose prose-invert max-w-none cursor-pointer rounded-b-md bg-lb-bg-secondary px-4 py-3 text-sm text-lb-text-primary"
           onDoubleClick={() => setEditing(true)}
         >
           {content ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           ) : (
-            <p className="text-df-text-muted italic">Double-click to edit markdown</p>
+            <p className="text-lb-text-muted italic">Double-click to edit markdown</p>
           )}
         </div>
       )}

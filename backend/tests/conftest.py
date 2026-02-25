@@ -1,4 +1,4 @@
-"""Shared test fixtures for DataFlow backend tests."""
+"""Shared test fixtures for Lembic backend tests."""
 
 import tempfile
 from pathlib import Path
@@ -15,12 +15,12 @@ def tmp_project(tmp_path: Path) -> Path:
     lib_dir.mkdir()
     outputs_dir = tmp_path / "outputs"
     outputs_dir.mkdir()
-    dataflow_dir = tmp_path / ".dataflow"
-    dataflow_dir.mkdir()
-    (dataflow_dir / "history").mkdir()
+    notebook_dir = tmp_path / ".notebook"
+    notebook_dir.mkdir()
+    (notebook_dir / "history").mkdir()
 
     # Create minimal manifest
-    manifest = tmp_path / "dataflow.yaml"
+    manifest = tmp_path / "notebook.yaml"
     manifest.write_text("cells: []\n")
 
     return tmp_path

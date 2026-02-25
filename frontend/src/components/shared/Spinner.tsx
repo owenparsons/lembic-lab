@@ -6,5 +6,5 @@ interface SpinnerProps {
 }
 
 export function Spinner({ size = 16, className = "" }: SpinnerProps) {
-  return <Loader size={size} className={`animate-spin text-df-accent-primary ${className}`} />;
+  return <Loader size={size} className={`animate-spin text-lb-accent-primary ${className}`} />;
 }

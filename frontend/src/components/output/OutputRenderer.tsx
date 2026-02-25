@@ -18,7 +18,7 @@ export function OutputRenderer({ outputs }: OutputRendererProps) {
   if (outputs.length === 0) return null;
 
   return (
-    <div className="border-t border-df-border-secondary bg-df-bg-primary px-3 py-2 space-y-2">
+    <div className="border-t border-lb-border-secondary bg-lb-bg-primary px-3 py-2 space-y-2">
       {outputs.map((output, i) => (
         <OutputItem key={i} output={output} />
       ))}
@@ -70,7 +70,7 @@ function RichOutput({ data }: { data: Record<string, unknown> }) {
       return <TableOutput data={jsonData as Record<string, unknown>[]} />;
     }
     return (
-      <pre className="whitespace-pre-wrap font-mono text-xs text-df-text-primary">
+      <pre className="whitespace-pre-wrap font-mono text-xs text-lb-text-primary">
         {JSON.stringify(jsonData, null, 2)}
       </pre>
     );
@@ -83,6 +83,6 @@ function RichOutput({ data }: { data: Record<string, unknown> }) {
 
   // Unknown mime type
   return (
-    <pre className="font-mono text-xs text-df-text-muted">[{mime}]</pre>
+    <pre className="font-mono text-xs text-lb-text-muted">[{mime}]</pre>
   );
 }

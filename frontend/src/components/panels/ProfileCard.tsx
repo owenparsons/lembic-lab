@@ -11,13 +11,13 @@ export function ProfileCard({ column, totalRows }: ProfileCardProps) {
   const isNumeric = column.mean !== undefined;
 
   return (
-    <div className="rounded border border-df-border-secondary bg-df-bg-primary p-2.5">
+    <div className="rounded border border-lb-border-secondary bg-lb-bg-primary p-2.5">
       {/* Column name and dtype */}
       <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-xs font-semibold text-df-text-primary">
+        <span className="font-mono text-xs font-semibold text-lb-text-primary">
           {column.name}
         </span>
-        <span className="rounded bg-df-bg-tertiary px-1.5 py-0.5 text-[10px] font-mono text-df-text-muted">
+        <span className="rounded bg-lb-bg-tertiary px-1.5 py-0.5 text-[10px] font-mono text-lb-text-muted">
           {column.dtype}
         </span>
       </div>
@@ -48,8 +48,8 @@ export function ProfileCard({ column, totalRows }: ProfileCardProps) {
 
       {/* Top values */}
       {column.top_values && column.top_values.length > 0 && (
-        <div className="mt-2 border-t border-df-border-secondary pt-2">
-          <div className="mb-1 text-[10px] font-semibold uppercase text-df-text-muted">
+        <div className="mt-2 border-t border-lb-border-secondary pt-2">
+          <div className="mb-1 text-[10px] font-semibold uppercase text-lb-text-muted">
             Top Values
           </div>
           <div className="space-y-0.5">
@@ -60,13 +60,13 @@ export function ProfileCard({ column, totalRows }: ProfileCardProps) {
               return (
                 <div key={i} className="flex items-center gap-2">
                   <div
-                    className="h-1.5 rounded-full bg-df-accent-primary/60"
+                    className="h-1.5 rounded-full bg-lb-accent-primary/60"
                     style={{ width: `${Math.max(pct, 2)}%` }}
                   />
-                  <span className="truncate font-mono text-[10px] text-df-text-primary">
+                  <span className="truncate font-mono text-[10px] text-lb-text-primary">
                     {val}
                   </span>
-                  <span className="ml-auto whitespace-nowrap text-[10px] text-df-text-muted">
+                  <span className="ml-auto whitespace-nowrap text-[10px] text-lb-text-muted">
                     {count} ({pct.toFixed(1)}%)
                   </span>
                 </div>
@@ -90,10 +90,10 @@ function StatItem({
 }) {
   return (
     <div>
-      <div className="text-[10px] text-df-text-muted">{label}</div>
+      <div className="text-[10px] text-lb-text-muted">{label}</div>
       <div
         className={`font-mono text-xs ${
-          alert ? "text-df-state-stale" : "text-df-text-primary"
+          alert ? "text-lb-state-stale" : "text-lb-text-primary"
         }`}
       >
         {value}

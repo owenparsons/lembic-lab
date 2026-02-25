@@ -63,7 +63,7 @@ export const useUiStore = create<UiState>()(
         set((state) => ({ confirmOnRefresh: !state.confirmOnRefresh })),
     }),
     {
-      name: "dataflow-ui",
+      name: "lembic-ui",
       partialize: (state) => ({
         paneOrder: state.paneOrder,
         notebookPaneSize: state.notebookPaneSize,

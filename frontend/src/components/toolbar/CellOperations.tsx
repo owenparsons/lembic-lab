@@ -56,7 +56,7 @@ export function CellOperations() {
         onClick={handleDeleteCell}
         disabled={!selectedCellId}
       />
-      <div className="mx-1 h-4 w-px bg-df-border-secondary" />
+      <div className="mx-1 h-4 w-px bg-lb-border-secondary" />
       <ToolbarButton
         icon={ArrowUp}
         label="Move cell up"

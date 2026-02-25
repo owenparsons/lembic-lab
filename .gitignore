@@ -29,8 +29,8 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 
-# DataFlow runtime
-.dataflow/
+# Lembic runtime
+.notebook/
 execution_log.jsonl
 outputs/
 

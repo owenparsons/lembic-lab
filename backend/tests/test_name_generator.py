@@ -1,6 +1,6 @@
 """Tests for the cell name generator."""
 
-from dataflow.services.name_generator import generate_name
+from lembic.services.name_generator import generate_name
 
 
 def test_generates_name():

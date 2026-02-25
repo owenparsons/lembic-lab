@@ -34,6 +34,9 @@ Thumbs.db
 execution_log.jsonl
 outputs/
 
+# Docs (personal build/fix logs)
+docs/
+
 # Environment
 .env
 .env.local

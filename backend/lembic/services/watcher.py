@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Callable, Awaitable
 
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
+from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileMovedEvent
 from watchdog.observers import Observer
 
 
@@ -20,6 +20,7 @@ IGNORE_PATTERNS = {
     ".notebook/history",
     "execution_log.jsonl",
     ".git",
+    ".claude",
     "node_modules",
 }
 
@@ -68,6 +69,13 @@ class DebouncedHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         self._debounce(event.src_path)
+
+    def on_moved(self, event: FileSystemEvent) -> None:
+        """Handle atomic writes (write temp → rename to target)."""
+        if event.is_directory:
+            return
+        if isinstance(event, FileMovedEvent):
+            self._debounce(event.dest_path)
 
     def _debounce(self, path: str) -> None:
         if _should_ignore(path):

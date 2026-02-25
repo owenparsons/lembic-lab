@@ -105,10 +105,11 @@ class FileWatcher:
         self,
         project_dir: Path,
         on_change: Callable[[str, str], Awaitable[None]],
+        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self.project_dir = project_dir
         self._observer: Observer | None = None
-        self._handler = DebouncedHandler(on_change)
+        self._handler = DebouncedHandler(on_change, loop=loop)
 
     def start(self) -> None:
         self._observer = Observer()

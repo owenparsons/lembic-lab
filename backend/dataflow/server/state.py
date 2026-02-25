@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from dataflow.services.file_manager import FileManager
     from dataflow.services.kernel_manager import KernelManager
     from dataflow.services.pty_manager import PtyManager
+    from dataflow.services.watcher import FileWatcher
     from dataflow.ws.manager import ConnectionManager
 
 
@@ -25,3 +26,4 @@ class AppState:
         self.execution_log: ExecutionLog | None = None
         self.cell_executor: CellExecutor | None = None
         self.ws_manager: ConnectionManager | None = None
+        self.file_watcher: FileWatcher | None = None

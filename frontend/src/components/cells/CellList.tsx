@@ -12,6 +12,8 @@ export function CellList() {
   const loading = useNotebookStore((s) => s.loading);
   const error = useNotebookStore((s) => s.error);
   const dirty = useNotebookStore((s) => s.dirty);
+  const pendingRefresh = useNotebookStore((s) => s.pendingRefresh);
+  const setPendingRefresh = useNotebookStore((s) => s.setPendingRefresh);
   const saveCell = useNotebookStore((s) => s.saveCell);
   const addCell = useNotebookStore((s) => s.addCell);
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
@@ -74,6 +76,25 @@ export function CellList() {
 
   return (
     <div className="space-y-0 p-4">
+      {pendingRefresh && (
+        <div className="mb-3 flex items-center justify-between rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+          <span>Notebook updated externally</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadNotebook()}
+              className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-amber-500"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => setPendingRefresh(false)}
+              className="rounded bg-df-bg-secondary px-3 py-1 text-xs font-medium text-df-text-secondary transition-colors hover:bg-df-bg-hover"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <AddCellButton afterId={null} />
       {cells.map((cell) => {
         const isSelected = selectedCellId === cell.id;

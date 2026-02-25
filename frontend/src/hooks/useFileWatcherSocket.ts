@@ -1,12 +1,15 @@
 import { useCallback } from "react";
 import { useWebSocket } from "./useWebSocket";
 import { useNotebookStore } from "../stores/notebookStore";
+import { useUiStore } from "../stores/uiStore";
 import type { FileWatcherMessage } from "../types/ws";
 
 export function useFileWatcherSocket() {
   const updateContent = useNotebookStore((s) => s.updateContent);
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
+  const setPendingRefresh = useNotebookStore((s) => s.setPendingRefresh);
   const dirty = useNotebookStore((s) => s.dirty);
+  const confirmOnRefresh = useUiStore((s) => s.confirmOnRefresh);
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
@@ -27,8 +30,11 @@ export function useFileWatcherSocket() {
         }
 
         case "manifest_modified": {
-          // Reload the full notebook
-          loadNotebook();
+          if (confirmOnRefresh) {
+            setPendingRefresh(true);
+          } else {
+            loadNotebook();
+          }
           break;
         }
 
@@ -37,7 +43,7 @@ export function useFileWatcherSocket() {
           break;
       }
     },
-    [updateContent, loadNotebook, dirty],
+    [updateContent, loadNotebook, setPendingRefresh, dirty, confirmOnRefresh],
   );
 
   const { connected } = useWebSocket({

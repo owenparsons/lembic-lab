@@ -12,6 +12,7 @@ interface UiState {
   variableExplorerOpen: boolean;
   profilePanelOpen: boolean;
   dependencyGraphOpen: boolean;
+  confirmOnRefresh: boolean;
 
   togglePaneOrder: () => void;
   setPaneSize: (size: number) => void;
@@ -20,6 +21,7 @@ interface UiState {
   toggleVariableExplorer: () => void;
   toggleProfilePanel: () => void;
   toggleDependencyGraph: () => void;
+  toggleConfirmOnRefresh: () => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -32,6 +34,7 @@ export const useUiStore = create<UiState>()(
       variableExplorerOpen: false,
       profilePanelOpen: false,
       dependencyGraphOpen: false,
+      confirmOnRefresh: false,
 
       togglePaneOrder: () =>
         set((state) => ({
@@ -55,6 +58,9 @@ export const useUiStore = create<UiState>()(
 
       toggleDependencyGraph: () =>
         set((state) => ({ dependencyGraphOpen: !state.dependencyGraphOpen })),
+
+      toggleConfirmOnRefresh: () =>
+        set((state) => ({ confirmOnRefresh: !state.confirmOnRefresh })),
     }),
     {
       name: "dataflow-ui",
@@ -62,6 +68,7 @@ export const useUiStore = create<UiState>()(
         paneOrder: state.paneOrder,
         notebookPaneSize: state.notebookPaneSize,
         variableExplorerOpen: state.variableExplorerOpen,
+        confirmOnRefresh: state.confirmOnRefresh,
       }),
     },
   ),

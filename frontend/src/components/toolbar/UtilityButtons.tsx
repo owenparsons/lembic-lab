@@ -1,4 +1,4 @@
-import { Save, Variable, GitBranch } from "lucide-react";
+import { Save, Variable, GitBranch, ShieldCheck } from "lucide-react";
 import { ToolbarButton } from "./ToolbarButton";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -8,8 +8,10 @@ export function UtilityButtons() {
   const dirty = useNotebookStore((s) => s.dirty);
   const toggleVarExplorer = useUiStore((s) => s.toggleVariableExplorer);
   const toggleDepGraph = useUiStore((s) => s.toggleDependencyGraph);
+  const toggleConfirmOnRefresh = useUiStore((s) => s.toggleConfirmOnRefresh);
   const varExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
   const depGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
+  const confirmOnRefresh = useUiStore((s) => s.confirmOnRefresh);
 
   return (
     <div className="flex items-center gap-0.5">
@@ -18,6 +20,12 @@ export function UtilityButtons() {
         label="Save all (Cmd+S)"
         onClick={saveAll}
         disabled={dirty.size === 0}
+      />
+      <ToolbarButton
+        icon={ShieldCheck}
+        label="Confirm before refresh"
+        onClick={toggleConfirmOnRefresh}
+        active={confirmOnRefresh}
       />
       <div className="mx-1 h-4 w-px bg-df-border-secondary" />
       <ToolbarButton

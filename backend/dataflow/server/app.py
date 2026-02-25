@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,7 +15,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dataflow.server.state import AppState
 from dataflow.services.execution_log import ExecutionLog
 from dataflow.services.file_manager import FileManager
+from dataflow.services.watcher import FileWatcher
 from dataflow.ws.manager import ConnectionManager
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -26,10 +31,51 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     state.execution_log = ExecutionLog(state.project_dir / "execution_log.jsonl")
     state.ws_manager = ConnectionManager()
 
+    # File watcher for live-reload
+    loop = asyncio.get_running_loop()
+    file_manager = state.file_manager
+    ws_manager = state.ws_manager
+    cells_dir = state.project_dir / "cells"
+
+    async def on_file_change(path: str, new_hash: str) -> None:
+        if path.endswith("dataflow.yaml"):
+            file_manager.invalidate_manifest()
+            try:
+                manifest = file_manager.load_manifest()
+                await ws_manager.broadcast_filewatcher(
+                    {
+                        "type": "manifest_modified",
+                        "manifest": manifest.model_dump(),
+                    }
+                )
+            except Exception:
+                logger.exception("Error broadcasting manifest change")
+        elif cells_dir.as_posix() in path:
+            # Extract cell ID from filename like "abc123_my_cell.py"
+            filename = Path(path).stem
+            cell_id = filename.split("_")[0]
+            try:
+                content = Path(path).read_text()
+            except OSError:
+                return
+            await ws_manager.broadcast_filewatcher(
+                {
+                    "type": "cell_modified",
+                    "cell_id": cell_id,
+                    "new_content": content,
+                    "new_hash": new_hash,
+                }
+            )
+
+    state.file_watcher = FileWatcher(state.project_dir, on_file_change, loop=loop)
+    state.file_watcher.start()
+
     # Kernel and PTY managers initialized lazily on first use
     yield
 
     # Cleanup
+    if state.file_watcher is not None:
+        state.file_watcher.stop()
     if state.kernel_manager is not None:
         await state.kernel_manager.shutdown()
     if state.pty_manager is not None:

@@ -9,9 +9,11 @@ interface NotebookState {
   dirty: Set<string>; // cells modified since last save
   loading: boolean;
   error: string | null;
+  pendingRefresh: boolean;
 
   // Actions
   loadNotebook: () => Promise<void>;
+  setPendingRefresh: (pending: boolean) => void;
   addCell: (data: CellCreate) => Promise<CellResponse | undefined>;
   deleteCell: (cellId: string) => Promise<void>;
   updateContent: (cellId: string, content: string) => void;
@@ -31,6 +33,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   dirty: new Set(),
   loading: false,
   error: null,
+  pendingRefresh: false,
 
   loadNotebook: async () => {
     set({ loading: true, error: null });
@@ -40,7 +43,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       for (const cell of data.cells) {
         contents[cell.id] = cell.content;
       }
-      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null });
+      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false });
     } catch (e) {
       const message = e instanceof Error
         ? (e.name === "AbortError" ? "Backend not reachable (request timed out)" : e.message)
@@ -48,6 +51,8 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       set({ loading: false, error: message });
     }
   },
+
+  setPendingRefresh: (pending) => set({ pendingRefresh: pending }),
 
   addCell: async (data) => {
     try {

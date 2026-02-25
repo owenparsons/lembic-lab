@@ -63,6 +63,23 @@ def open(port: int, no_browser: bool) -> None:
     )
 
 
+@cli.command("gen-name")
+def gen_name() -> None:
+    """Generate a random cell name (adjective-noun pair)."""
+    from lembic.services.file_manager import FileManager
+    from lembic.services.name_generator import generate_name
+
+    project_dir = Path.cwd()
+    manifest = project_dir / "notebook.yaml"
+    if manifest.exists():
+        fm = FileManager(project_dir)
+        existing = {c.name for c in fm.load_manifest().cells}
+    else:
+        existing = set()
+
+    click.echo(generate_name(existing))
+
+
 @cli.command("run-cell")
 @click.argument("cell_id")
 def run_cell(cell_id: str) -> None:

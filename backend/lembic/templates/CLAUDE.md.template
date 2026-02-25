@@ -16,7 +16,7 @@ in the manifest. Always do both:
 
 1. Create the file: `cells/{id}_{name}.py`
    - `id` is an 8-character hex string (e.g. `a1b2c3d4`)
-   - `name` is a short kebab-case label (e.g. `load-data`)
+   - `name`: run `lembic gen-name` to get a random name (e.g. `lucky-aura`)
 2. Add an entry to `notebook.yaml` under `cells:`:
    ```yaml
    - id: a1b2c3d4

@@ -14,15 +14,14 @@ watching this directory for changes.
 A cell only appears in the notebook if it exists BOTH as a file AND
 in the manifest. Always do both:
 
-1. Create the file: `cells/{id}_{name}.py`
-   - `id` is an 8-character hex string (e.g. `a1b2c3d4`)
-   - `name`: run `lembic gen-name` to get a random name (e.g. `lucky-aura`)
-2. Add an entry to `notebook.yaml` under `cells:`:
+1. Run `lembic gen-cell` to get an ID and name (e.g. `a1b2c3d4 lucky-aura`)
+2. Create the file: `cells/{id}_{name}.py`
+3. Add an entry to `notebook.yaml` under `cells:`:
    ```yaml
    - id: a1b2c3d4
-     name: load-data
+     name: lucky-aura
      type: code
-     file: cells/a1b2c3d4_load-data.py
+     file: cells/a1b2c3d4_lucky-aura.py
    ```
 
 If you skip step 2, the file exists but the notebook cannot see it.

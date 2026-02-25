@@ -63,9 +63,11 @@ def open(port: int, no_browser: bool) -> None:
     )
 
 
-@cli.command("gen-name")
-def gen_name() -> None:
-    """Generate a random cell name (adjective-noun pair)."""
+@cli.command("gen-cell")
+def gen_cell() -> None:
+    """Generate a cell ID and random name. Output: {id} {name}"""
+    import uuid
+
     from lembic.services.file_manager import FileManager
     from lembic.services.name_generator import generate_name
 
@@ -77,7 +79,9 @@ def gen_name() -> None:
     else:
         existing = set()
 
-    click.echo(generate_name(existing))
+    cell_id = uuid.uuid4().hex[:8]
+    name = generate_name(existing)
+    click.echo(f"{cell_id} {name}")
 
 
 @cli.command("run-cell")

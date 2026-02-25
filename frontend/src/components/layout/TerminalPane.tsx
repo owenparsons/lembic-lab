@@ -14,7 +14,7 @@ export function TerminalPane() {
 
   // Create default session on mount if none exist
   useEffect(() => {
-    if (sessions.length === 0) {
+    if (useTerminalStore.getState().sessions.length === 0) {
       addSession();
     }
   }, []);

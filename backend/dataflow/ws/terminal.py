@@ -2,12 +2,14 @@
 
 import asyncio
 import json
+import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from dataflow.server.state import AppState
 from dataflow.services.pty_manager import PtyManager
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -48,5 +50,8 @@ async def terminal_ws(websocket: WebSocket) -> None:
                         await pty.write(text.encode("utf-8"))
                 except (json.JSONDecodeError, KeyError):
                     pass
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
         read_task.cancel()
+        logger.info("Terminal WebSocket disconnected")

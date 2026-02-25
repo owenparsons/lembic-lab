@@ -1,9 +1,12 @@
 """WebSocket endpoint for kernel messages."""
 
+import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from dataflow.server.state import AppState
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -17,5 +20,8 @@ async def kernel_ws(websocket: WebSocket) -> None:
     try:
         while True:
             await websocket.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
         manager.disconnect_kernel(websocket)
+        logger.info("Kernel WebSocket disconnected")

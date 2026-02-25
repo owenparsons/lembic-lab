@@ -12,10 +12,10 @@ export function TerminalPane() {
   // Map of session id → send function
   const sendFnsRef = useRef<Map<string, (message: string) => void>>(new Map());
 
-  // Create default session on mount if none exist
+  // Create default session on mount if none exist, with claude auto-started
   useEffect(() => {
     if (useTerminalStore.getState().sessions.length === 0) {
-      addSession();
+      addSession({ initCommand: "claude" });
     }
   }, []);
 
@@ -43,6 +43,7 @@ export function TerminalPane() {
             <XTerminal
               sessionId={session.id}
               visible={session.id === activeSessionId}
+              initCommand={session.initCommand}
               onSendReady={(sendFn) => {
                 sendFnsRef.current.set(session.id, sendFn);
               }}

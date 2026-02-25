@@ -5,6 +5,7 @@ export interface TerminalSession {
   id: string;
   label: string;
   connected: boolean;
+  initCommand?: string;
 }
 
 let sessionCounter = 0;
@@ -15,7 +16,7 @@ interface TerminalState {
   injectionMessage: string;
   attachments: TerminalAttachment[];
 
-  addSession: () => string;
+  addSession: (options?: { initCommand?: string }) => string;
   removeSession: (id: string) => void;
   setActiveSession: (id: string) => void;
   setSessionConnected: (id: string, connected: boolean) => void;
@@ -36,12 +37,13 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   injectionMessage: "",
   attachments: [],
 
-  addSession: () => {
+  addSession: (options) => {
     sessionCounter++;
     const session: TerminalSession = {
       id: generateSessionId(),
       label: `Terminal ${sessionCounter}`,
       connected: false,
+      initCommand: options?.initCommand,
     };
     set((state) => ({
       sessions: [...state.sessions, session],

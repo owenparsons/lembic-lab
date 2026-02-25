@@ -18,11 +18,17 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
     await websocket.accept()
     state: AppState = websocket.app.state.app_state
 
+    init_command = websocket.query_params.get("init_command")
+
     # Lazily create PTY for this session
     if session_id not in state.pty_sessions:
         pty = PtyManager()
         await pty.start(cwd=str(state.project_dir))
         state.pty_sessions[session_id] = pty
+
+        # Run initial command if provided (only on first creation)
+        if init_command:
+            await pty.write((init_command + "\n").encode("utf-8"))
     else:
         pty = state.pty_sessions[session_id]
 

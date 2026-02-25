@@ -9,10 +9,11 @@ import "@xterm/xterm/css/xterm.css";
 interface XTerminalProps {
   sessionId: string;
   visible: boolean;
+  initCommand?: string;
   onSendReady?: (sendFn: (message: string) => void) => void;
 }
 
-export function XTerminal({ sessionId, visible, onSendReady }: XTerminalProps) {
+export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -51,7 +52,10 @@ export function XTerminal({ sessionId, visible, onSendReady }: XTerminalProps) {
 
     // WebSocket connection
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/terminal/${sessionId}`;
+    const params = initCommand
+      ? `?init_command=${encodeURIComponent(initCommand)}`
+      : "";
+    const wsUrl = `${protocol}//${window.location.host}/ws/terminal/${sessionId}${params}`;
     const ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;

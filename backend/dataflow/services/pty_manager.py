@@ -13,12 +13,18 @@ from typing import AsyncIterator
 
 
 class PtyManager:
-    """Manages a PTY process with async read/write."""
+    """Manages a PTY process with async read/write.
+
+    Uses the event loop's fd monitoring (add_reader) to drain the PTY
+    master into an asyncio.Queue, decoupling reads from WebSocket sends
+    so the PTY kernel buffer never fills up and blocks the child process.
+    """
 
     def __init__(self) -> None:
         self._master_fd: int | None = None
         self._pid: int | None = None
         self._running = False
+        self._output_queue: asyncio.Queue[bytes] = asyncio.Queue()
 
     async def start(self, command: str = "/bin/bash", cwd: str | None = None) -> None:
         """Start a new PTY process."""
@@ -57,45 +63,49 @@ class PtyManager:
             self._pid = child_pid
             self._running = True
 
-            # Set non-blocking
+            # Set non-blocking for event-loop integration
             flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
             fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-    async def read(self) -> AsyncIterator[bytes]:
-        """Async generator yielding data from the PTY."""
-        if self._master_fd is None:
+            # Register with event loop — _on_readable fires whenever
+            # the master fd has data, draining it into the queue immediately
+            loop = asyncio.get_running_loop()
+            loop.add_reader(master_fd, self._on_readable)
+
+    def _on_readable(self) -> None:
+        """Event loop callback: drain PTY master fd into the output queue."""
+        if not self._running or self._master_fd is None:
             return
+        try:
+            data = os.read(self._master_fd, 65536)
+            if data:
+                self._output_queue.put_nowait(data)
+        except BlockingIOError:
+            pass
+        except OSError:
+            self._running = False
 
-        loop = asyncio.get_event_loop()
-        while self._running:
+    async def read(self) -> AsyncIterator[bytes]:
+        """Async generator yielding data from the PTY output queue."""
+        while self._running or not self._output_queue.empty():
             try:
-                data = await loop.run_in_executor(None, self._blocking_read)
-                if data:
-                    yield data
-            except OSError:
-                break
-
-    def _blocking_read(self) -> bytes:
-        """Read from PTY with a short timeout."""
-        if self._master_fd is None:
-            return b""
-        import select
-
-        ready, _, _ = select.select([self._master_fd], [], [], 0.1)
-        if ready:
-            try:
-                return os.read(self._master_fd, 4096)
-            except OSError:
-                self._running = False
-                return b""
-        return b""
+                data = await asyncio.wait_for(self._output_queue.get(), timeout=0.5)
+                yield data
+            except asyncio.TimeoutError:
+                continue
 
     async def write(self, data: bytes) -> None:
         """Write data to the PTY."""
         if self._master_fd is None:
             return
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, os.write, self._master_fd, data)
+        while data:
+            try:
+                written = os.write(self._master_fd, data)
+                data = data[written:]
+            except BlockingIOError:
+                await asyncio.sleep(0.01)
+            except OSError:
+                break
 
     async def resize(self, rows: int, cols: int) -> None:
         """Resize the PTY."""
@@ -107,6 +117,11 @@ class PtyManager:
     async def shutdown(self) -> None:
         """Shut down the PTY process."""
         self._running = False
+        if self._master_fd is not None:
+            try:
+                asyncio.get_running_loop().remove_reader(self._master_fd)
+            except Exception:
+                pass
         if self._pid is not None:
             try:
                 os.kill(self._pid, signal.SIGTERM)

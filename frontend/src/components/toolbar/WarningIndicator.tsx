@@ -8,7 +8,7 @@ export function WarningIndicator() {
   if (warnings.length === 0) return null;
 
   return (
-    <Tooltip content={`${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}>
+    <Tooltip content={`${warnings.length} warning${warnings.length === 1 ? "" : "s"}`} position="bottom">
       <div className="flex items-center gap-1 rounded px-2 py-1 text-xs text-lb-state-stale">
         <AlertTriangle size={14} />
         <span>{warnings.length}</span>

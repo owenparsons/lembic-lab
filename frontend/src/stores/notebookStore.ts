@@ -10,6 +10,7 @@ interface NotebookState {
   loading: boolean;
   error: string | null;
   pendingRefresh: boolean;
+  scrollToCellId: string | null;
 
   // Actions
   loadNotebook: () => Promise<void>;
@@ -25,6 +26,7 @@ interface NotebookState {
   clearOutputs: (cellId: string) => void;
   setCells: (cells: CellResponse[]) => void;
   moveCell: (cellId: string, afterId: string | null) => Promise<void>;
+  clearScrollTarget: () => void;
 }
 
 export const useNotebookStore = create<NotebookState>((set, get) => ({
@@ -34,8 +36,10 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   loading: false,
   error: null,
   pendingRefresh: false,
+  scrollToCellId: null,
 
   loadNotebook: async () => {
+    const oldCellIds = new Set(get().cells.map((c) => c.id));
     set({ loading: true, error: null });
     try {
       const data = await notebookApi.load();
@@ -43,7 +47,11 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       for (const cell of data.cells) {
         contents[cell.id] = cell.content;
       }
-      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false });
+      // Scroll to the last newly added cell
+      const newCells = data.cells.filter((c) => !oldCellIds.has(c.id));
+      const lastNew = newCells[newCells.length - 1];
+      const scrollToCellId = lastNew?.id ?? null;
+      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false, scrollToCellId });
     } catch (e) {
       const message = e instanceof Error
         ? (e.name === "AbortError" ? "Backend not reachable (request timed out)" : e.message)
@@ -68,6 +76,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
         return {
           cells,
           contents: { ...state.contents, [cell.id]: cell.content },
+          scrollToCellId: cell.id,
         };
       });
       return cell;
@@ -173,6 +182,8 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   },
 
   setCells: (cells) => set({ cells }),
+
+  clearScrollTarget: () => set({ scrollToCellId: null }),
 
   moveCell: async (cellId, afterId) => {
     await cellApi.move(cellId, { after_id: afterId });

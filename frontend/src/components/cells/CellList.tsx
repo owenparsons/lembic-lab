@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
 import { CodeCell } from "./CodeCell";
@@ -17,9 +18,24 @@ export function CellList() {
   const saveCell = useNotebookStore((s) => s.saveCell);
   const addCell = useNotebookStore((s) => s.addCell);
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
+  const scrollToCellId = useNotebookStore((s) => s.scrollToCellId);
+  const clearScrollTarget = useNotebookStore((s) => s.clearScrollTarget);
   const selectedCellId = useUiStore((s) => s.selectedCellId);
   const selectCell = useUiStore((s) => s.selectCell);
   const setMode = useUiStore((s) => s.setMode);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollToCellId || !containerRef.current) return;
+    // Wait a frame for the DOM to update after cells render
+    requestAnimationFrame(() => {
+      const el = containerRef.current?.querySelector(
+        `[data-cell-id="${scrollToCellId}"]`,
+      );
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      clearScrollTarget();
+    });
+  }, [scrollToCellId, clearScrollTarget]);
 
   if (loading) {
     return (
@@ -75,7 +91,7 @@ export function CellList() {
   };
 
   return (
-    <div className="space-y-0 p-4">
+    <div ref={containerRef} className="space-y-0 p-4">
       {pendingRefresh && (
         <div className="mb-3 flex items-center justify-between rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
           <span>Notebook updated externally</span>
@@ -107,6 +123,7 @@ export function CellList() {
         return (
           <div
             key={cell.id}
+            data-cell-id={cell.id}
             onClick={() => selectCell(cell.id)}
             className={`rounded-md border transition-colors ${
               isSelected

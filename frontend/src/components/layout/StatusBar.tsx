@@ -5,7 +5,10 @@ import { useTerminalStore } from "../../stores/terminalStore";
 export function StatusBar() {
   const kernelStatus = useKernelStore((s) => s.status);
   const dirty = useNotebookStore((s) => s.dirty);
-  const terminalConnected = useTerminalStore((s) => s.connected);
+  const sessions = useTerminalStore((s) => s.sessions);
+  const activeSessionId = useTerminalStore((s) => s.activeSessionId);
+  const terminalConnected =
+    sessions.find((s) => s.id === activeSessionId)?.connected ?? false;
 
   const statusColor: Record<string, string> = {
     idle: "bg-lb-state-success",

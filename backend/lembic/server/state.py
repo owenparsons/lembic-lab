@@ -22,7 +22,7 @@ class AppState:
         self.project_dir = project_dir
         self.file_manager: FileManager | None = None
         self.kernel_manager: KernelManager | None = None
-        self.pty_manager: PtyManager | None = None
+        self.pty_sessions: dict[str, PtyManager] = {}
         self.execution_log: ExecutionLog | None = None
         self.cell_executor: CellExecutor | None = None
         self.ws_manager: ConnectionManager | None = None

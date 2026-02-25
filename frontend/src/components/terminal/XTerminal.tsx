@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from "react";
+import { useEffect, useRef } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
@@ -7,15 +7,17 @@ import { useTerminalStore } from "../../stores/terminalStore";
 import "@xterm/xterm/css/xterm.css";
 
 interface XTerminalProps {
-  onSendRef?: MutableRefObject<((message: string) => void) | null>;
+  sessionId: string;
+  visible: boolean;
+  onSendReady?: (sendFn: (message: string) => void) => void;
 }
 
-export function XTerminal({ onSendRef }: XTerminalProps) {
+export function XTerminal({ sessionId, visible, onSendReady }: XTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const setConnected = useTerminalStore((s) => s.setConnected);
+  const setSessionConnected = useTerminalStore((s) => s.setSessionConnected);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -49,26 +51,26 @@ export function XTerminal({ onSendRef }: XTerminalProps) {
 
     // WebSocket connection
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/terminal`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/terminal/${sessionId}`;
     const ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
 
     ws.onopen = () => {
-      setConnected(true);
+      setSessionConnected(sessionId, true);
       // Send initial size
       const dims = fitAddon.proposeDimensions();
       if (dims) {
-        ws.send(JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }));
+        ws.send(
+          JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
+        );
       }
       // Expose send function for injection bar
-      if (onSendRef) {
-        onSendRef.current = (message: string) => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "inject", message }));
-          }
-        };
-      }
+      onSendReady?.((message: string) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "inject", message }));
+        }
+      });
     };
 
     ws.onmessage = (event) => {
@@ -80,7 +82,7 @@ export function XTerminal({ onSendRef }: XTerminalProps) {
     };
 
     ws.onclose = () => {
-      setConnected(false);
+      setSessionConnected(sessionId, false);
     };
 
     // Forward terminal input to WS
@@ -105,7 +107,9 @@ export function XTerminal({ onSendRef }: XTerminalProps) {
       fitAddon.fit();
       const dims = fitAddon.proposeDimensions();
       if (dims && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }));
+        ws.send(
+          JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
+        );
       }
     });
     resizeObserver.observe(containerRef.current);
@@ -118,7 +122,16 @@ export function XTerminal({ onSendRef }: XTerminalProps) {
       wsRef.current = null;
       fitAddonRef.current = null;
     };
-  }, [setConnected]);
+  }, [sessionId, setSessionConnected]);
+
+  // Re-fit when becoming visible (display:none elements don't trigger ResizeObserver)
+  useEffect(() => {
+    if (visible && fitAddonRef.current) {
+      requestAnimationFrame(() => {
+        fitAddonRef.current?.fit();
+      });
+    }
+  }, [visible]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }

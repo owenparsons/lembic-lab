@@ -78,8 +78,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         state.file_watcher.stop()
     if state.kernel_manager is not None:
         await state.kernel_manager.shutdown()
-    if state.pty_manager is not None:
-        await state.pty_manager.shutdown()
+    for pty_session in state.pty_sessions.values():
+        await pty_session.shutdown()
+    state.pty_sessions.clear()
 
 
 def create_app(project_dir: str | Path | None = None) -> FastAPI:

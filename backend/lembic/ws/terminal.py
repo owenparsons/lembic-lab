@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 
 from lembic.server.state import AppState
 from lembic.services.pty_manager import PtyManager
@@ -13,17 +13,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.websocket("/ws/terminal")
-async def terminal_ws(websocket: WebSocket) -> None:
+@router.websocket("/ws/terminal/{session_id}")
+async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
     await websocket.accept()
     state: AppState = websocket.app.state.app_state
 
-    # Lazily start PTY if needed
-    if state.pty_manager is None:
-        state.pty_manager = PtyManager()
-        await state.pty_manager.start(cwd=str(state.project_dir))
-
-    pty = state.pty_manager
+    # Lazily create PTY for this session
+    if session_id not in state.pty_sessions:
+        pty = PtyManager()
+        await pty.start(cwd=str(state.project_dir))
+        state.pty_sessions[session_id] = pty
+    else:
+        pty = state.pty_sessions[session_id]
 
     async def read_pty() -> None:
         """Forward PTY output to WebSocket."""
@@ -54,4 +55,16 @@ async def terminal_ws(websocket: WebSocket) -> None:
         pass
     finally:
         read_task.cancel()
-        logger.info("Terminal WebSocket disconnected")
+        logger.info("Terminal WebSocket disconnected (session=%s)", session_id)
+
+
+@router.delete("/api/terminal/{session_id}")
+async def delete_terminal(session_id: str, request: Request) -> dict[str, str]:
+    """Shut down and remove a PTY session."""
+    state: AppState = request.app.state.app_state
+    pty = state.pty_sessions.pop(session_id, None)
+    if pty is not None:
+        await pty.shutdown()
+        logger.info("Terminal session deleted: %s", session_id)
+        return {"status": "deleted"}
+    return {"status": "not_found"}

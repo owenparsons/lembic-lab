@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from lembic.services.execution_log import ExecutionLog
     from lembic.services.file_manager import FileManager
     from lembic.services.kernel_manager import KernelManager
-    from lembic.services.pty_manager import PtyManager
     from lembic.ws.manager import ConnectionManager
 
 
@@ -31,12 +30,6 @@ def get_kernel_manager(request: Request) -> KernelManager:
     state = get_state(request)
     assert state.kernel_manager is not None
     return state.kernel_manager
-
-
-def get_pty_manager(request: Request) -> PtyManager:
-    state = get_state(request)
-    assert state.pty_manager is not None
-    return state.pty_manager
 
 
 def get_execution_log(request: Request) -> ExecutionLog:

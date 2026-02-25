@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { X, RefreshCw, Database } from "lucide-react";
+import { RefreshCw, Database } from "lucide-react";
 import { useVariableStore } from "../../stores/variableStore";
-import { useUiStore } from "../../stores/uiStore";
 import { useProfileStore } from "../../stores/profileStore";
 import { formatBytes } from "../../utils/formatters";
 
@@ -9,7 +8,6 @@ export function VariableExplorer() {
   const variables = useVariableStore((s) => s.variables);
   const loading = useVariableStore((s) => s.loading);
   const refresh = useVariableStore((s) => s.refresh);
-  const toggleVariableExplorer = useUiStore((s) => s.toggleVariableExplorer);
   const loadProfile = useProfileStore((s) => s.loadProfile);
 
   useEffect(() => {
@@ -17,7 +15,7 @@ export function VariableExplorer() {
   }, [refresh]);
 
   return (
-    <div className="flex h-full flex-col border-l border-lb-border-primary bg-lb-bg-secondary">
+    <div className="flex h-full flex-col bg-lb-bg-secondary">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-lb-border-primary px-3 py-2">
         <div className="flex items-center gap-2">
@@ -29,23 +27,14 @@ export function VariableExplorer() {
             ({variables.length})
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => refresh()}
-            disabled={loading}
-            className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary disabled:opacity-50"
-            title="Refresh"
-          >
-            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-          </button>
-          <button
-            onClick={toggleVariableExplorer}
-            className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary"
-            title="Close"
-          >
-            <X size={13} />
-          </button>
-        </div>
+        <button
+          onClick={() => refresh()}
+          disabled={loading}
+          className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary disabled:opacity-50"
+          title="Refresh"
+        >
+          <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+        </button>
       </div>
 
       {/* Variable list */}

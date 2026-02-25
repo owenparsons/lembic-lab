@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { TerminalAttachment } from "../types/terminal";
+import { useUiStore } from "./uiStore";
 
 export interface TerminalSession {
   id: string;
@@ -49,11 +50,13 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       sessions: [...state.sessions, session],
       activeSessionId: session.id,
     }));
+    useUiStore.getState().setActiveRightTab(session.id);
     return session.id;
   },
 
   removeSession: (id) => {
     const { sessions, activeSessionId, addSession } = get();
+    const uiState = useUiStore.getState();
 
     // If closing the last tab, create a new one first
     if (sessions.length === 1) {
@@ -62,6 +65,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
         sessions: state.sessions.filter((s) => s.id !== id),
         activeSessionId: newId,
       }));
+      // addSession already syncs activeRightTab
     } else {
       // Switch to adjacent tab if closing the active one
       let nextActiveId = activeSessionId;
@@ -74,13 +78,19 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
         sessions: state.sessions.filter((s) => s.id !== id),
         activeSessionId: nextActiveId,
       }));
+      if (uiState.activeRightTab === id) {
+        uiState.setActiveRightTab(nextActiveId);
+      }
     }
 
     // Fire-and-forget DELETE to clean up backend PTY
     fetch(`/api/terminal/${id}`, { method: "DELETE" }).catch(() => {});
   },
 
-  setActiveSession: (id) => set({ activeSessionId: id }),
+  setActiveSession: (id) => {
+    set({ activeSessionId: id });
+    useUiStore.getState().setActiveRightTab(id);
+  },
 
   setSessionConnected: (id, connected) =>
     set((state) => ({

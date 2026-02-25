@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { X, GitBranch } from "lucide-react";
+import { GitBranch } from "lucide-react";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useExecutionStore } from "../../stores/executionStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -31,7 +31,6 @@ export function DependencyGraph() {
   const cells = useNotebookStore((s) => s.cells);
   const cellStates = useExecutionStore((s) => s.cellStates);
   const logEntries = useExecutionStore((s) => s.logEntries);
-  const toggleDependencyGraph = useUiStore((s) => s.toggleDependencyGraph);
   const selectCell = useUiStore((s) => s.selectCell);
 
   // Build dependency data from execution log
@@ -155,22 +154,15 @@ export function DependencyGraph() {
   );
 
   return (
-    <div className="flex h-full flex-col border-l border-lb-border-primary bg-lb-bg-secondary">
+    <div className="flex h-full flex-col bg-lb-bg-secondary">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-lb-border-primary px-3 py-2">
+      <div className="flex items-center border-b border-lb-border-primary px-3 py-2">
         <div className="flex items-center gap-2">
           <GitBranch size={14} className="text-lb-accent-primary" />
           <span className="text-xs font-semibold text-lb-text-primary">
             Dependencies
           </span>
         </div>
-        <button
-          onClick={toggleDependencyGraph}
-          className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary"
-          title="Close"
-        >
-          <X size={13} />
-        </button>
       </div>
 
       {/* Graph */}

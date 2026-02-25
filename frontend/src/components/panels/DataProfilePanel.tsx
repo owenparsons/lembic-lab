@@ -1,33 +1,24 @@
-import { X, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useProfileStore } from "../../stores/profileStore";
-import { useUiStore } from "../../stores/uiStore";
 import { ProfileCard } from "./ProfileCard";
 import { formatBytes } from "../../utils/formatters";
 
 export function DataProfilePanel() {
   const profiles = useProfileStore((s) => s.profiles);
   const loading = useProfileStore((s) => s.loading);
-  const toggleProfilePanel = useUiStore((s) => s.toggleProfilePanel);
 
   const profileList = Object.values(profiles);
 
   return (
-    <div className="flex h-full flex-col border-l border-lb-border-primary bg-lb-bg-secondary">
+    <div className="flex h-full flex-col bg-lb-bg-secondary">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-lb-border-primary px-3 py-2">
+      <div className="flex items-center border-b border-lb-border-primary px-3 py-2">
         <div className="flex items-center gap-2">
           <BarChart3 size={14} className="text-lb-accent-primary" />
           <span className="text-xs font-semibold text-lb-text-primary">
             Data Profiles
           </span>
         </div>
-        <button
-          onClick={toggleProfilePanel}
-          className="rounded p-1 text-lb-text-muted transition-colors hover:bg-lb-bg-hover hover:text-lb-text-primary"
-          title="Close"
-        >
-          <X size={13} />
-        </button>
       </div>
 
       {/* Content */}

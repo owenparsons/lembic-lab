@@ -1,15 +1,47 @@
-import { Plus, Terminal, X } from "lucide-react";
+import { Plus, Terminal, X, Database, GitBranch, BarChart3 } from "lucide-react";
 import { useTerminalStore } from "../../stores/terminalStore";
+import { useUiStore, type PanelTab } from "../../stores/uiStore";
+
+const PANEL_TABS: {
+  key: PanelTab;
+  label: string;
+  icon: typeof Database;
+  openKey: "variableExplorerOpen" | "dependencyGraphOpen" | "profilePanelOpen";
+  toggleKey: "toggleVariableExplorer" | "toggleDependencyGraph" | "toggleProfilePanel";
+}[] = [
+  { key: "variables", label: "Variables", icon: Database, openKey: "variableExplorerOpen", toggleKey: "toggleVariableExplorer" },
+  { key: "dependencies", label: "Dependencies", icon: GitBranch, openKey: "dependencyGraphOpen", toggleKey: "toggleDependencyGraph" },
+  { key: "profile", label: "Data Profile", icon: BarChart3, openKey: "profilePanelOpen", toggleKey: "toggleProfilePanel" },
+];
 
 export function TerminalTabBar() {
-  const { sessions, activeSessionId, addSession, removeSession, setActiveSession } =
+  const { sessions, addSession, removeSession, setActiveSession } =
     useTerminalStore();
+  const activeRightTab = useUiStore((s) => s.activeRightTab);
+  const setActiveRightTab = useUiStore((s) => s.setActiveRightTab);
+  const variableExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
+  const dependencyGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
+  const profilePanelOpen = useUiStore((s) => s.profilePanelOpen);
+  const toggleVariableExplorer = useUiStore((s) => s.toggleVariableExplorer);
+  const toggleDependencyGraph = useUiStore((s) => s.toggleDependencyGraph);
+  const toggleProfilePanel = useUiStore((s) => s.toggleProfilePanel);
+
+  const openState: Record<string, boolean> = {
+    variableExplorerOpen,
+    dependencyGraphOpen,
+    profilePanelOpen,
+  };
+  const toggleFns: Record<string, () => void> = {
+    toggleVariableExplorer,
+    toggleDependencyGraph,
+    toggleProfilePanel,
+  };
 
   return (
     <div className="flex items-center border-b border-lb-border-secondary bg-lb-bg-secondary">
       <div className="flex min-w-0 flex-1 overflow-x-auto">
         {sessions.map((session) => {
-          const isActive = session.id === activeSessionId;
+          const isActive = activeRightTab === session.id;
           return (
             <button
               key={session.id}
@@ -34,6 +66,36 @@ export function TerminalTabBar() {
                 onClick={(e) => {
                   e.stopPropagation();
                   removeSession(session.id);
+                }}
+                className="shrink-0 rounded p-0.5 opacity-0 transition-opacity hover:bg-lb-bg-tertiary group-hover:opacity-100"
+              >
+                <X size={10} />
+              </span>
+            </button>
+          );
+        })}
+
+        {/* Panel tabs */}
+        {PANEL_TABS.map(({ key, label, icon: Icon, openKey, toggleKey }) => {
+          if (!openState[openKey]) return null;
+          const isActive = activeRightTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveRightTab(key)}
+              className={`group flex shrink-0 items-center gap-1.5 border-r border-lb-border-secondary px-3 py-1.5 text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-lb-bg-primary text-lb-text-primary"
+                  : "bg-lb-bg-secondary text-lb-text-secondary hover:bg-lb-bg-tertiary"
+              }`}
+            >
+              <Icon size={12} className="shrink-0 text-lb-text-secondary" />
+              <span className="truncate">{label}</span>
+              <span
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFns[toggleKey]!();
                 }}
                 className="shrink-0 rounded p-0.5 opacity-0 transition-opacity hover:bg-lb-bg-tertiary group-hover:opacity-100"
               >

@@ -1,0 +1,41 @@
+# {name}
+
+This is a DataFlow notebook project. A browser-based notebook UI is
+watching this directory for changes.
+
+## Structure
+- `dataflow.yaml` — Notebook manifest (cell order + metadata)
+- `cells/` — One Python/Markdown file per cell
+- `lib/` — Reusable function library (importable from cells)
+- `outputs/` — Saved plots and tables
+- `execution_log.jsonl` — Execution history
+
+## IMPORTANT: Creating cells requires TWO steps
+A cell only appears in the notebook if it exists BOTH as a file AND
+in the manifest. Always do both:
+
+1. Create the file: `cells/{id}_{name}.py`
+   - `id` is an 8-character hex string (e.g. `a1b2c3d4`)
+   - `name` is a short kebab-case label (e.g. `load-data`)
+2. Add an entry to `dataflow.yaml` under `cells:`:
+   ```yaml
+   - id: a1b2c3d4
+     name: load-data
+     type: code
+     file: cells/a1b2c3d4_load-data.py
+   ```
+
+If you skip step 2, the file exists but the notebook cannot see it.
+
+## Editing cells
+- Edit cell files directly; the notebook watches for changes and
+  updates the UI automatically.
+- Cell order in the notebook matches the order in `dataflow.yaml`.
+
+## Deleting cells
+- Remove the file from `cells/` AND remove its entry from
+  `dataflow.yaml`.
+
+## Running cells
+- Run `dataflow run-cell <id>` to execute a cell headlessly.
+- Or click the run button in the notebook UI.

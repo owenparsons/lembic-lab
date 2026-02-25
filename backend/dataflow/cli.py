@@ -24,8 +24,7 @@ def init(name: str, path: str | None) -> None:
     if path:
         parent = Path(path)
     else:
-        # Default to projects/ directory at the repo root
-        parent = Path(__file__).resolve().parent.parent.parent / "projects"
+        parent = Path.home() / "Dataflow"
 
     parent.mkdir(parents=True, exist_ok=True)
     project_dir = parent / name

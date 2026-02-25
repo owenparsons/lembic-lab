@@ -37,9 +37,6 @@ outputs/
 # Docs (personal build/fix logs)
 docs/
 
-# DataFlow projects
-projects/
-
 # Environment
 .env
 .env.local

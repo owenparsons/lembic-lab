@@ -15,7 +15,7 @@ if [ ! -f "$PROJECT_DIR/dataflow.yaml" ]; then
     echo "   or: DATAFLOW_PROJECT_DIR=/path/to/project npm run dev"
     echo ""
     echo "Create a project first: cd backend && uv run dataflow init my-project"
-    echo "Projects are stored in: $ROOT_DIR/projects/"
+    echo "Projects are stored in: ~/Dataflow/"
     exit 1
 fi
 

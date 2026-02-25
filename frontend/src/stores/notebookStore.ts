@@ -8,6 +8,7 @@ interface NotebookState {
   contents: Record<string, string>; // cellId → current editor content
   dirty: Set<string>; // cells modified since last save
   loading: boolean;
+  error: string | null;
 
   // Actions
   loadNotebook: () => Promise<void>;
@@ -29,18 +30,22 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   contents: {},
   dirty: new Set(),
   loading: false,
+  error: null,
 
   loadNotebook: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const data = await notebookApi.load();
       const contents: Record<string, string> = {};
       for (const cell of data.cells) {
         contents[cell.id] = cell.content;
       }
-      set({ cells: data.cells, contents, dirty: new Set(), loading: false });
-    } catch {
-      set({ loading: false });
+      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null });
+    } catch (e) {
+      const message = e instanceof Error
+        ? (e.name === "AbortError" ? "Backend not reachable (request timed out)" : e.message)
+        : "Failed to load notebook";
+      set({ loading: false, error: message });
     }
   },
 

@@ -20,14 +20,20 @@ class ConnectionManager:
         self._kernel_connections.append(ws)
 
     def disconnect_kernel(self, ws: WebSocket) -> None:
-        self._kernel_connections.remove(ws)
+        try:
+            self._kernel_connections.remove(ws)
+        except ValueError:
+            pass
 
     async def connect_filewatcher(self, ws: WebSocket) -> None:
         await ws.accept()
         self._filewatcher_connections.append(ws)
 
     def disconnect_filewatcher(self, ws: WebSocket) -> None:
-        self._filewatcher_connections.remove(ws)
+        try:
+            self._filewatcher_connections.remove(ws)
+        except ValueError:
+            pass
 
     async def broadcast_kernel(self, message: dict[str, Any]) -> None:
         """Broadcast a JSON message to all kernel WS clients."""

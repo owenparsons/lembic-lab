@@ -5,14 +5,16 @@ import { MarkdownCell } from "./MarkdownCell";
 import { DefineCell } from "./DefineCell";
 import { AddCellButton } from "./AddCellButton";
 import { executionApi } from "../../services/executionApi";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
 export function CellList() {
   const cells = useNotebookStore((s) => s.cells);
   const loading = useNotebookStore((s) => s.loading);
+  const error = useNotebookStore((s) => s.error);
   const dirty = useNotebookStore((s) => s.dirty);
   const saveCell = useNotebookStore((s) => s.saveCell);
   const addCell = useNotebookStore((s) => s.addCell);
+  const loadNotebook = useNotebookStore((s) => s.loadNotebook);
   const selectedCellId = useUiStore((s) => s.selectedCellId);
   const selectCell = useUiStore((s) => s.selectCell);
   const setMode = useUiStore((s) => s.setMode);
@@ -21,6 +23,22 @@ export function CellList() {
     return (
       <div className="flex h-full items-center justify-center text-df-text-muted">
         Loading notebook...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-df-text-muted">
+        <p className="text-df-state-error">{error}</p>
+        <p className="text-sm">Make sure the backend is running on port 8000</p>
+        <button
+          onClick={() => loadNotebook()}
+          className="flex items-center gap-2 rounded-md border border-df-border-primary bg-df-bg-secondary px-4 py-2 text-sm text-df-text-primary transition-colors hover:bg-df-bg-hover"
+        >
+          <RefreshCw size={16} />
+          Retry
+        </button>
       </div>
     );
   }

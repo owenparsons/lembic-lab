@@ -25,22 +25,22 @@ class PtyManager:
         if self._running:
             return
 
-        pid, master_fd = pty.openpty()
+        master_fd, slave_fd = pty.openpty()
 
         child_pid = os.fork()
         if child_pid == 0:
-            # Child process
+            # Child process: close master, use slave for stdio
             os.close(master_fd)
             os.setsid()
 
             # Set up slave as controlling terminal
-            slave_fd = os.open(os.ttyname(pid), os.O_RDWR)
-            os.dup2(slave_fd, 0)
-            os.dup2(slave_fd, 1)
-            os.dup2(slave_fd, 2)
-            if slave_fd > 2:
-                os.close(slave_fd)
-            os.close(pid)
+            tty_fd = os.open(os.ttyname(slave_fd), os.O_RDWR)
+            os.dup2(tty_fd, 0)
+            os.dup2(tty_fd, 1)
+            os.dup2(tty_fd, 2)
+            if tty_fd > 2:
+                os.close(tty_fd)
+            os.close(slave_fd)
 
             if cwd:
                 os.chdir(cwd)
@@ -51,8 +51,8 @@ class PtyManager:
 
             os.execvpe(command, [command], env)
         else:
-            # Parent process
-            os.close(pid)
+            # Parent process: close slave, keep master for read/write
+            os.close(slave_fd)
             self._master_fd = master_fd
             self._pid = child_pid
             self._running = True

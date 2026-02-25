@@ -21,7 +21,23 @@ export function useWebSocket({
   const retriesRef = useRef(0);
   const [connected, setConnected] = useState(false);
 
+  // Store callbacks in refs so connect() doesn't depend on them
+  const onMessageRef = useRef(onMessage);
+  const onOpenRef = useRef(onOpen);
+  const onCloseRef = useRef(onClose);
+
+  onMessageRef.current = onMessage;
+  onOpenRef.current = onOpen;
+  onCloseRef.current = onClose;
+
   const connect = useCallback(() => {
+    // Close any existing connection before opening a new one
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}${url}`;
     const ws = new WebSocket(wsUrl);
@@ -30,17 +46,17 @@ export function useWebSocket({
     ws.onopen = () => {
       setConnected(true);
       retriesRef.current = 0;
-      onOpen?.();
+      onOpenRef.current?.();
     };
 
     ws.onmessage = (event) => {
-      onMessage?.(event);
+      onMessageRef.current?.(event);
     };
 
     ws.onclose = () => {
       setConnected(false);
       wsRef.current = null;
-      onClose?.();
+      onCloseRef.current?.();
 
       if (reconnect && retriesRef.current < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, retriesRef.current), 30000);
@@ -52,12 +68,16 @@ export function useWebSocket({
     ws.onerror = () => {
       ws.close();
     };
-  }, [url, onMessage, onOpen, onClose, reconnect, maxRetries]);
+  }, [url, reconnect, maxRetries]);
 
   useEffect(() => {
     connect();
     return () => {
-      wsRef.current?.close();
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
   }, [connect]);
 

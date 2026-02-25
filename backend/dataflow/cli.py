@@ -16,16 +16,22 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("name")
-@click.option("--path", default=None, help="Parent directory (defaults to cwd)")
+@click.option("--path", default=None, help="Parent directory (defaults to projects/)")
 def init(name: str, path: str | None) -> None:
     """Initialize a new DataFlow project."""
     from dataflow.filesystem.project_ops import initialize_project
 
-    parent = Path(path) if path else Path.cwd()
+    if path:
+        parent = Path(path)
+    else:
+        # Default to projects/ directory at the repo root
+        parent = Path(__file__).resolve().parent.parent.parent / "projects"
+
+    parent.mkdir(parents=True, exist_ok=True)
     project_dir = parent / name
     initialize_project(project_dir, name)
     click.echo(f"Created DataFlow project: {project_dir}")
-    click.echo(f"  cd {name} && dataflow open")
+    click.echo(f"  ./scripts/dev.sh {project_dir}")
 
 
 @cli.command()

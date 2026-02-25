@@ -39,3 +39,6 @@ If you skip step 2, the file exists but the notebook cannot see it.
 ## Running cells
 - Run `dataflow run-cell <id>` to execute a cell headlessly.
 - Or click the run button in the notebook UI.
+
+## Git
+- Do NOT add `Co-Authored-By` lines to commit messages.

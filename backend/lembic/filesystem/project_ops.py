@@ -34,6 +34,7 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
         gitignore_path.write_text(
             "# Lembic\n"
             ".notebook/\n"
+            ".claude/\n"
             "execution_log.jsonl\n"
             "outputs/\n"
             "__pycache__/\n"
@@ -52,3 +53,24 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
         template_path = Path(__file__).resolve().parent.parent / "templates" / "CLAUDE.md.template"
         template = template_path.read_text()
         claude_md.write_text(template.replace("{name}", name))
+
+    # Create .claude/settings.local.json — pre-allow editing notebook files
+    claude_settings_dir = project_dir / ".claude"
+    claude_settings_dir.mkdir(exist_ok=True)
+    claude_settings = claude_settings_dir / "settings.local.json"
+    if not claude_settings.exists():
+        import json
+
+        settings = {
+            "permissions": {
+                "allow": [
+                    "Read",
+                    "Edit(/notebook.yaml)",
+                    "Edit(/cells/**)",
+                    "Write(/cells/**)",
+                    "Edit(/lib/**)",
+                    "Write(/lib/**)",
+                ]
+            }
+        }
+        claude_settings.write_text(json.dumps(settings, indent=2) + "\n")

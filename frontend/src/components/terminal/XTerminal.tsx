@@ -39,16 +39,14 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
 
-    // Open immediately so the terminal can receive data from the WebSocket
+    // Open immediately so the terminal can buffer incoming data
     term.open(container);
 
-    // Store refs so the visibility effect can access them
     termRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    // Defer WebGL addon + initial fit to the next frame.
-    // This ensures the container layout is fully settled and any prior
-    // WebGL contexts from disposed terminals have been cleaned up.
+    // Defer WebGL addon + initial fit to the next frame so the container
+    // layout is fully settled and any prior WebGL contexts are cleaned up.
     const initRafId = requestAnimationFrame(() => {
       try {
         const webglAddon = new WebglAddon();
@@ -62,69 +60,76 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       fitAddon.fit();
     });
 
-    // WebSocket connection
+    // Defer WebSocket creation to the next microtask. This prevents React
+    // StrictMode's mount→cleanup→remount cycle from creating two connections
+    // to the same session — the first mount's timeout is cleared in cleanup
+    // before it ever fires, so only one WebSocket (from the remount) connects.
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const params = initCommand
       ? `?init_command=${encodeURIComponent(initCommand)}`
       : "";
     const wsUrl = `${protocol}//${window.location.host}/ws/terminal/${sessionId}${params}`;
-    const ws = new WebSocket(wsUrl);
-    ws.binaryType = "arraybuffer";
-    wsRef.current = ws;
 
-    ws.onopen = () => {
-      setSessionConnected(sessionId, true);
-      // Re-fit to get definitive dimensions (layout is certainly settled by now)
-      fitAddon.fit();
-      const dims = fitAddon.proposeDimensions();
-      if (dims) {
-        ws.send(
-          JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
-        );
-      }
-      // Expose send function for injection bar
-      onSendReady?.((message: string) => {
+    const wsTimer = setTimeout(() => {
+      const ws = new WebSocket(wsUrl);
+      ws.binaryType = "arraybuffer";
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setSessionConnected(sessionId, true);
+        // Fit to get definitive dimensions now that layout is settled
+        fitAddon.fit();
+        const dims = fitAddon.proposeDimensions();
+        if (dims) {
+          ws.send(
+            JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
+          );
+        }
+        // Expose send function for injection bar
+        onSendReady?.((message: string) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "inject", message }));
+          }
+        });
+      };
+
+      ws.onmessage = (event) => {
+        if (event.data instanceof ArrayBuffer) {
+          term.write(new Uint8Array(event.data));
+        } else {
+          term.write(event.data as string);
+        }
+      };
+
+      ws.onclose = () => {
+        setSessionConnected(sessionId, false);
+      };
+
+      // Forward terminal input to WS
+      term.onData((data) => {
         if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "inject", message }));
+          ws.send(new TextEncoder().encode(data));
         }
       });
-    };
 
-    ws.onmessage = (event) => {
-      if (event.data instanceof ArrayBuffer) {
-        term.write(new Uint8Array(event.data));
-      } else {
-        term.write(event.data as string);
-      }
-    };
-
-    ws.onclose = () => {
-      setSessionConnected(sessionId, false);
-    };
-
-    // Forward terminal input to WS
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(new TextEncoder().encode(data));
-      }
-    });
-
-    term.onBinary((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        const buffer = new Uint8Array(data.length);
-        for (let i = 0; i < data.length; i++) {
-          buffer[i] = data.charCodeAt(i);
+      term.onBinary((data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          const buffer = new Uint8Array(data.length);
+          for (let i = 0; i < data.length; i++) {
+            buffer[i] = data.charCodeAt(i);
+          }
+          ws.send(buffer);
         }
-        ws.send(buffer);
-      }
-    });
+      });
+    }, 0);
 
-    // ResizeObserver — skip when hidden (performance: no need to refit invisible terminals)
+    // ResizeObserver — skip when hidden (performance)
     const resizeObserver = new ResizeObserver(() => {
       if (!visibleRef.current) return;
       fitAddon.fit();
+      const ws = wsRef.current;
       const dims = fitAddon.proposeDimensions();
-      if (dims && ws.readyState === WebSocket.OPEN) {
+      if (dims && ws?.readyState === WebSocket.OPEN) {
         ws.send(
           JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
         );
@@ -133,9 +138,11 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     resizeObserver.observe(container);
 
     return () => {
+      clearTimeout(wsTimer);
       cancelAnimationFrame(initRafId);
       resizeObserver.disconnect();
-      ws.close();
+      const ws = wsRef.current;
+      if (ws) ws.close();
       term.dispose();
       termRef.current = null;
       wsRef.current = null;

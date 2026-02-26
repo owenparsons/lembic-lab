@@ -39,18 +39,24 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   scrollToCellId: null,
 
   loadNotebook: async () => {
-    const oldCellIds = new Set(get().cells.map((c) => c.id));
-    set({ loading: true, error: null });
+    const oldCells = get().cells;
+    const oldCellIds = new Set(oldCells.map((c) => c.id));
+    const isRefresh = oldCells.length > 0;
+    // Only show loading spinner on initial load — refreshes keep cells mounted
+    // so scroll position is preserved
+    if (!isRefresh) {
+      set({ loading: true, error: null });
+    }
     try {
       const data = await notebookApi.load();
       const contents: Record<string, string> = {};
       for (const cell of data.cells) {
         contents[cell.id] = cell.content;
       }
-      // Scroll to the last newly added cell
+      // Scroll to the last newly added cell (preserve existing target if set)
       const newCells = data.cells.filter((c) => !oldCellIds.has(c.id));
       const lastNew = newCells[newCells.length - 1];
-      const scrollToCellId = lastNew?.id ?? null;
+      const scrollToCellId = lastNew?.id ?? get().scrollToCellId;
       set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false, scrollToCellId });
     } catch (e) {
       const message = e instanceof Error

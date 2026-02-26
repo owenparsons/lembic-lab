@@ -27,13 +27,15 @@ export function CellList() {
 
   useEffect(() => {
     if (!scrollToCellId || !containerRef.current) return;
-    // Wait a frame for the DOM to update after cells render
+    // Double-rAF: first frame lets React commit the DOM, second ensures layout
     requestAnimationFrame(() => {
-      const el = containerRef.current?.querySelector(
-        `[data-cell-id="${scrollToCellId}"]`,
-      );
-      el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      clearScrollTarget();
+      requestAnimationFrame(() => {
+        const el = containerRef.current?.querySelector(
+          `[data-cell-id="${scrollToCellId}"]`,
+        );
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        clearScrollTarget();
+      });
     });
   }, [scrollToCellId, clearScrollTarget]);
 

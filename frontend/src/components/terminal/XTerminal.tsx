@@ -48,10 +48,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       // WebGL not available, fall back to canvas
     }
 
-    // Only fit if the container has real dimensions (skip if display:none)
-    if (containerRef.current.offsetWidth > 0) {
-      fitAddon.fit();
-    }
+    fitAddon.fit();
     termRef.current = term;
     fitAddonRef.current = fitAddon;
 
@@ -111,7 +108,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       }
     });
 
-    // ResizeObserver for fit — skip when hidden (display:none → 0x0 corrupts cols/rows)
+    // ResizeObserver for fit — skip when hidden (performance: no need to refit invisible terminals)
     const resizeObserver = new ResizeObserver(() => {
       if (!visibleRef.current) return;
       fitAddon.fit();
@@ -134,7 +131,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     };
   }, [sessionId, setSessionConnected]);
 
-  // Re-fit when becoming visible (display:none elements don't trigger ResizeObserver)
+  // Re-fit when becoming visible
   useEffect(() => {
     if (visible && fitAddonRef.current) {
       requestAnimationFrame(() => {

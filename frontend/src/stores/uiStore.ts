@@ -14,10 +14,10 @@ interface UiState {
   variableExplorerOpen: boolean;
   profilePanelOpen: boolean;
   dependencyGraphOpen: boolean;
-  activeRightTab: string | null;
+  activePanelTab: PanelTab | null;
   confirmOnRefresh: boolean;
 
-  setActiveRightTab: (tab: string | null) => void;
+  setActivePanelTab: (tab: PanelTab | null) => void;
   togglePaneOrder: () => void;
   setPaneSize: (size: number) => void;
   selectCell: (cellId: string | null) => void;
@@ -38,10 +38,10 @@ export const useUiStore = create<UiState>()(
       variableExplorerOpen: false,
       profilePanelOpen: false,
       dependencyGraphOpen: false,
-      activeRightTab: null,
+      activePanelTab: null,
       confirmOnRefresh: false,
 
-      setActiveRightTab: (tab) => set({ activeRightTab: tab }),
+      setActivePanelTab: (tab) => set({ activePanelTab: tab }),
 
       togglePaneOrder: () =>
         set((state) => ({
@@ -62,11 +62,11 @@ export const useUiStore = create<UiState>()(
           const opening = !state.variableExplorerOpen;
           return {
             variableExplorerOpen: opening,
-            activeRightTab: opening
+            activePanelTab: opening
               ? "variables"
-              : state.activeRightTab === "variables"
+              : state.activePanelTab === "variables"
                 ? null
-                : state.activeRightTab,
+                : state.activePanelTab,
           };
         }),
 
@@ -75,11 +75,11 @@ export const useUiStore = create<UiState>()(
           const opening = !state.profilePanelOpen;
           return {
             profilePanelOpen: opening,
-            activeRightTab: opening
+            activePanelTab: opening
               ? "profile"
-              : state.activeRightTab === "profile"
+              : state.activePanelTab === "profile"
                 ? null
-                : state.activeRightTab,
+                : state.activePanelTab,
           };
         }),
 
@@ -88,11 +88,11 @@ export const useUiStore = create<UiState>()(
           const opening = !state.dependencyGraphOpen;
           return {
             dependencyGraphOpen: opening,
-            activeRightTab: opening
+            activePanelTab: opening
               ? "dependencies"
-              : state.activeRightTab === "dependencies"
+              : state.activePanelTab === "dependencies"
                 ? null
-                : state.activeRightTab,
+                : state.activePanelTab,
           };
         }),
 

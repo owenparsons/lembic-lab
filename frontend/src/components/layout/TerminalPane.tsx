@@ -12,7 +12,7 @@ export function TerminalPane() {
   const sessions = useTerminalStore((s) => s.sessions);
   const activeSessionId = useTerminalStore((s) => s.activeSessionId);
   const addSession = useTerminalStore((s) => s.addSession);
-  const activeRightTab = useUiStore((s) => s.activeRightTab);
+  const activePanelTab = useUiStore((s) => s.activePanelTab);
 
   // Map of session id → send function
   const sendFnsRef = useRef<Map<string, (message: string) => void>>(new Map());
@@ -37,36 +37,40 @@ export function TerminalPane() {
     <div className="flex h-full flex-col overflow-hidden bg-lb-bg-primary">
       <TerminalTabBar />
       <div className="relative flex-1 overflow-hidden">
-        {sessions.map((session) => (
-          <div
-            key={session.id}
-            className="absolute inset-0"
-            style={{
-              display: session.id === activeRightTab ? "block" : "none",
-            }}
-          >
-            <XTerminal
-              sessionId={session.id}
-              visible={session.id === activeRightTab}
-              initCommand={session.initCommand}
-              onSendReady={(sendFn) => {
-                sendFnsRef.current.set(session.id, sendFn);
+        {sessions.map((session) => {
+          const isVisible =
+            session.id === activeSessionId && !activePanelTab;
+          return (
+            <div
+              key={session.id}
+              className="absolute inset-0"
+              style={{
+                visibility: isVisible ? "visible" : "hidden",
               }}
-            />
-          </div>
-        ))}
+            >
+              <XTerminal
+                sessionId={session.id}
+                visible={isVisible}
+                initCommand={session.initCommand}
+                onSendReady={(sendFn) => {
+                  sendFnsRef.current.set(session.id, sendFn);
+                }}
+              />
+            </div>
+          );
+        })}
 
-        {activeRightTab === "variables" && (
+        {activePanelTab === "variables" && (
           <div className="absolute inset-0 overflow-hidden">
             <VariableExplorer />
           </div>
         )}
-        {activeRightTab === "dependencies" && (
+        {activePanelTab === "dependencies" && (
           <div className="absolute inset-0 overflow-hidden">
             <DependencyGraph />
           </div>
         )}
-        {activeRightTab === "profile" && (
+        {activePanelTab === "profile" && (
           <div className="absolute inset-0 overflow-hidden">
             <DataProfilePanel />
           </div>

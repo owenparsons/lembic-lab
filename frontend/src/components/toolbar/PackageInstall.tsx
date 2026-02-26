@@ -1,14 +1,12 @@
 import { useState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useEnvironmentStore } from "../../stores/environmentStore";
-import { useKernelStore } from "../../stores/kernelStore";
 
 export function PackageInstall() {
   const [value, setValue] = useState("");
   const [flash, setFlash] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const installing = useEnvironmentStore((s) => s.installing);
   const install = useEnvironmentStore((s) => s.install);
-  const restart = useKernelStore((s) => s.restart);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
@@ -60,14 +58,6 @@ export function PackageInstall() {
           className={`text-xs ${flash.type === "success" ? "text-lb-state-success" : "text-lb-state-error"}`}
         >
           {flash.text}
-          {flash.type === "success" && (
-            <button
-              onClick={restart}
-              className="ml-1 underline hover:no-underline"
-            >
-              Restart kernel
-            </button>
-          )}
         </span>
       )}
     </div>

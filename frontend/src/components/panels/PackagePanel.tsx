@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, Trash2, RefreshCw, FolderOpen } from "lucide-react";
 import { useEnvironmentStore } from "../../stores/environmentStore";
-import { useKernelStore } from "../../stores/kernelStore";
 
 export function PackagePanel() {
   const status = useEnvironmentStore((s) => s.status);
@@ -13,7 +12,6 @@ export function PackagePanel() {
   const uninstall = useEnvironmentStore((s) => s.uninstall);
   const setExternal = useEnvironmentStore((s) => s.setExternal);
   const remove = useEnvironmentStore((s) => s.remove);
-  const restart = useKernelStore((s) => s.restart);
 
   const [installValue, setInstallValue] = useState("");
   const [externalPath, setExternalPath] = useState("");
@@ -33,7 +31,7 @@ export function PackagePanel() {
     const result = await install(pkgs);
     if (result.success) {
       setInstallValue("");
-      setMessage(`Installed ${pkgs.join(", ")}. Restart kernel to use.`);
+      setMessage(`Installed ${pkgs.join(", ")}. Run a cell to start the kernel.`);
     } else {
       setMessage("Install failed: " + result.output.slice(0, 200));
     }
@@ -45,7 +43,7 @@ export function PackagePanel() {
     const result = await setExternal(externalPath.trim());
     if (result.success) {
       setExternalPath("");
-      setMessage("External env set. Restart kernel to use.");
+      setMessage("External env set. Run a cell to start the kernel.");
     } else {
       setMessage(result.message);
     }
@@ -71,25 +69,16 @@ export function PackagePanel() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              loadStatus();
-              loadPackages();
-            }}
-            className="rounded p-1 text-lb-text-secondary hover:bg-lb-bg-hover"
-            title="Refresh"
-          >
-            <RefreshCw size={14} />
-          </button>
-          <button
-            onClick={restart}
-            className="rounded p-1 text-lb-text-secondary hover:bg-lb-bg-hover"
-            title="Restart kernel"
-          >
-            <RefreshCw size={14} className="text-lb-state-stale" />
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            loadStatus();
+            loadPackages();
+          }}
+          className="rounded p-1 text-lb-text-secondary hover:bg-lb-bg-hover"
+          title="Refresh"
+        >
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {/* Install input */}

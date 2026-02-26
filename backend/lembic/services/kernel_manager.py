@@ -21,6 +21,7 @@ class KernelManager:
         self._km: JupyterAsyncKernelManager | None = None
         self._kc: Any = None  # AsyncKernelClient
         self._started = False
+        self._kernel_env: dict[str, str] | None = None
 
     @property
     def is_started(self) -> bool:
@@ -32,16 +33,30 @@ class KernelManager:
             return
 
         self._km = JupyterAsyncKernelManager()
-        # If a venv python is specified, configure the kernel to use it
+        # If a venv python is specified, we must patch kernel_spec.argv
+        # after the spec is loaded. In jupyter_client 8.x, kernel_cmd is
+        # deprecated and ignored — format_kernel_cmd() always reads from
+        # kernel_spec.argv and replaces bare 'python' with sys.executable.
+        # We need to force-load the spec, then overwrite argv[0] with the
+        # venv's Python absolute path so it won't match the replacement.
         if self.python_path:
             venv_dir = str(Path(self.python_path).parent.parent)
+            # Force kernel spec to load, then patch argv
+            spec = self._km.kernel_spec
+            spec.argv = [
+                self.python_path,
+                "-m", "ipykernel_launcher",
+                "-f", "{connection_file}",
+            ]
             env = os.environ.copy()
             env["VIRTUAL_ENV"] = venv_dir
             env["PATH"] = os.path.join(venv_dir, "bin") + os.pathsep + env.get("PATH", "")
             env.pop("PYTHONHOME", None)
-            self._km.kernel_spec_manager  # ensure initialized
-            self._km.env = env
-        await self._km.start_kernel(cwd=self.project_dir)
+            self._kernel_env = env
+        if self._kernel_env:
+            await self._km.start_kernel(cwd=self.project_dir, env=self._kernel_env)
+        else:
+            await self._km.start_kernel(cwd=self.project_dir)
         self._kc = self._km.client()
         self._kc.start_channels()
 
@@ -115,13 +130,9 @@ class KernelManager:
         await self._km.interrupt_kernel()
 
     async def restart(self) -> None:
-        """Restart the kernel."""
-        self._ensure_started()
-        assert self._km is not None
-        await self._km.restart_kernel()
-        assert self._kc is not None
-        await asyncio.wait_for(self._kc.wait_for_ready(), timeout=30)
-        await self._run_startup()
+        """Restart the kernel with the same configuration."""
+        await self.shutdown()
+        await self.start()
 
     async def get_variables(self) -> list[dict[str, Any]]:
         """Introspect kernel namespace for variable information."""

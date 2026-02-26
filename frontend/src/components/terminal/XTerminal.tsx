@@ -18,6 +18,8 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
   const setSessionConnected = useTerminalStore((s) => s.setSessionConnected);
 
   useEffect(() => {
@@ -106,8 +108,9 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       }
     });
 
-    // ResizeObserver for fit
+    // ResizeObserver for fit — skip when hidden (display:none → 0x0 corrupts cols/rows)
     const resizeObserver = new ResizeObserver(() => {
+      if (!visibleRef.current) return;
       fitAddon.fit();
       const dims = fitAddon.proposeDimensions();
       if (dims && ws.readyState === WebSocket.OPEN) {
@@ -132,7 +135,16 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
   useEffect(() => {
     if (visible && fitAddonRef.current) {
       requestAnimationFrame(() => {
-        fitAddonRef.current?.fit();
+        const fitAddon = fitAddonRef.current;
+        const ws = wsRef.current;
+        if (!fitAddon) return;
+        fitAddon.fit();
+        const dims = fitAddon.proposeDimensions();
+        if (dims && ws?.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
+          );
+        }
       });
     }
   }, [visible]);

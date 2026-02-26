@@ -48,7 +48,10 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       // WebGL not available, fall back to canvas
     }
 
-    fitAddon.fit();
+    // Only fit if the container has real dimensions (skip if display:none)
+    if (containerRef.current.offsetWidth > 0) {
+      fitAddon.fit();
+    }
     termRef.current = term;
     fitAddonRef.current = fitAddon;
 

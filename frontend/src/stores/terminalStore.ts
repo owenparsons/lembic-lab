@@ -46,11 +46,11 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       connected: false,
       initCommand: options?.initCommand,
     };
+    useUiStore.getState().setActiveRightTab(session.id);
     set((state) => ({
       sessions: [...state.sessions, session],
       activeSessionId: session.id,
     }));
-    useUiStore.getState().setActiveRightTab(session.id);
     return session.id;
   },
 

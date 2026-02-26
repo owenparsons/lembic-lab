@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import os
+from pathlib import Path
 from typing import Any, AsyncIterator
 
 from jupyter_client import AsyncKernelManager as JupyterAsyncKernelManager
@@ -13,8 +15,9 @@ from lembic.errors import KernelNotStartedError
 class KernelManager:
     """Manages a Jupyter kernel for code execution."""
 
-    def __init__(self, project_dir: str) -> None:
+    def __init__(self, project_dir: str, python_path: str | None = None) -> None:
         self.project_dir = project_dir
+        self.python_path = python_path
         self._km: JupyterAsyncKernelManager | None = None
         self._kc: Any = None  # AsyncKernelClient
         self._started = False
@@ -29,6 +32,15 @@ class KernelManager:
             return
 
         self._km = JupyterAsyncKernelManager()
+        # If a venv python is specified, configure the kernel to use it
+        if self.python_path:
+            venv_dir = str(Path(self.python_path).parent.parent)
+            env = os.environ.copy()
+            env["VIRTUAL_ENV"] = venv_dir
+            env["PATH"] = os.path.join(venv_dir, "bin") + os.pathsep + env.get("PATH", "")
+            env.pop("PYTHONHOME", None)
+            self._km.kernel_spec_manager  # ensure initialized
+            self._km.env = env
         await self._km.start_kernel(cwd=self.project_dir)
         self._kc = self._km.client()
         self._kc.start_channels()

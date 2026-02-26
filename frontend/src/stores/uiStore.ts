@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type PanelTab = "variables" | "dependencies" | "profile";
+export type PanelTab = "variables" | "dependencies" | "profile" | "packages";
 
 type PaneOrder = "notebook-terminal" | "terminal-notebook";
 type Mode = "command" | "edit";
@@ -14,6 +14,7 @@ interface UiState {
   variableExplorerOpen: boolean;
   profilePanelOpen: boolean;
   dependencyGraphOpen: boolean;
+  packagePanelOpen: boolean;
   activePanelTab: PanelTab | null;
   confirmOnRefresh: boolean;
 
@@ -25,6 +26,7 @@ interface UiState {
   toggleVariableExplorer: () => void;
   toggleProfilePanel: () => void;
   toggleDependencyGraph: () => void;
+  togglePackagePanel: () => void;
   toggleConfirmOnRefresh: () => void;
 }
 
@@ -38,6 +40,7 @@ export const useUiStore = create<UiState>()(
       variableExplorerOpen: false,
       profilePanelOpen: false,
       dependencyGraphOpen: false,
+      packagePanelOpen: false,
       activePanelTab: null,
       confirmOnRefresh: false,
 
@@ -91,6 +94,19 @@ export const useUiStore = create<UiState>()(
             activePanelTab: opening
               ? "dependencies"
               : state.activePanelTab === "dependencies"
+                ? null
+                : state.activePanelTab,
+          };
+        }),
+
+      togglePackagePanel: () =>
+        set((state) => {
+          const opening = !state.packagePanelOpen;
+          return {
+            packagePanelOpen: opening,
+            activePanelTab: opening
+              ? "packages"
+              : state.activePanelTab === "packages"
                 ? null
                 : state.activePanelTab,
           };

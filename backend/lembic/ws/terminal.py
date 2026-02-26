@@ -23,7 +23,11 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
     # Lazily create PTY for this session
     if session_id not in state.pty_sessions:
         pty = PtyManager()
-        await pty.start(cwd=str(state.project_dir))
+        # Activate venv in terminal if environment exists
+        env = None
+        if state.env_manager and state.env_manager.exists:
+            env = state.env_manager.get_shell_env()
+        await pty.start(cwd=str(state.project_dir), env=env)
         state.pty_sessions[session_id] = pty
 
         # Run initial command if provided (only on first creation)

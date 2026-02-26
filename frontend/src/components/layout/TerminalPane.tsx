@@ -7,6 +7,7 @@ import { useUiStore } from "../../stores/uiStore";
 import { VariableExplorer } from "../panels/VariableExplorer";
 import { DependencyGraph } from "../panels/DependencyGraph";
 import { DataProfilePanel } from "../panels/DataProfilePanel";
+import { PackagePanel } from "../panels/PackagePanel";
 
 export function TerminalPane() {
   const sessions = useTerminalStore((s) => s.sessions);
@@ -73,6 +74,11 @@ export function TerminalPane() {
         {activePanelTab === "profile" && (
           <div className="absolute inset-0 overflow-hidden">
             <DataProfilePanel />
+          </div>
+        )}
+        {activePanelTab === "packages" && (
+          <div className="absolute inset-0 overflow-hidden">
+            <PackagePanel />
           </div>
         )}
       </div>

@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { useKernelStore } from "../../stores/kernelStore";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useTerminalStore } from "../../stores/terminalStore";
+import { useEnvironmentStore } from "../../stores/environmentStore";
+import { useUiStore } from "../../stores/uiStore";
 
 export function StatusBar() {
   const kernelStatus = useKernelStore((s) => s.status);
@@ -9,6 +12,13 @@ export function StatusBar() {
   const activeSessionId = useTerminalStore((s) => s.activeSessionId);
   const terminalConnected =
     sessions.find((s) => s.id === activeSessionId)?.connected ?? false;
+  const envStatus = useEnvironmentStore((s) => s.status);
+  const loadStatus = useEnvironmentStore((s) => s.loadStatus);
+  const togglePackagePanel = useUiStore((s) => s.togglePackagePanel);
+
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
 
   const statusColor: Record<string, string> = {
     idle: "bg-lb-state-success",
@@ -26,6 +36,15 @@ export function StatusBar() {
           <span className={`inline-block h-2 w-2 rounded-full ${statusColor[kernelStatus] ?? "bg-lb-text-muted"}`} />
           Kernel: {kernelStatus}
         </span>
+        <button
+          onClick={togglePackagePanel}
+          className="flex items-center gap-1.5 hover:text-lb-text-primary"
+        >
+          <span className={`inline-block h-2 w-2 rounded-full ${envStatus?.exists ? "bg-lb-state-success" : "bg-lb-text-muted"}`} />
+          {envStatus?.exists
+            ? `Env: ${envStatus.package_count} packages`
+            : "No env"}
+        </button>
         <span className="flex items-center gap-1.5">
           <span className={`inline-block h-2 w-2 rounded-full ${terminalConnected ? "bg-lb-state-success" : "bg-lb-text-muted"}`} />
           Terminal: {terminalConnected ? "connected" : "disconnected"}

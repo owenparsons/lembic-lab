@@ -10,6 +10,7 @@ from lembic.server.state import AppState
 
 if TYPE_CHECKING:
     from lembic.services.cell_executor import CellExecutor
+    from lembic.services.env_manager import EnvironmentManager
     from lembic.services.execution_log import ExecutionLog
     from lembic.services.file_manager import FileManager
     from lembic.services.kernel_manager import KernelManager
@@ -38,6 +39,12 @@ def get_execution_log(request: Request) -> ExecutionLog:
     return state.execution_log
 
 
+def get_env_manager(request: Request) -> EnvironmentManager:
+    state = get_state(request)
+    assert state.env_manager is not None
+    return state.env_manager
+
+
 def get_cell_executor(request: Request) -> CellExecutor:
     state = get_state(request)
     if state.cell_executor is None:
@@ -45,7 +52,12 @@ def get_cell_executor(request: Request) -> CellExecutor:
         from lembic.services.kernel_manager import KernelManager
 
         if state.kernel_manager is None:
-            state.kernel_manager = KernelManager(str(state.project_dir))
+            python_path = None
+            if state.env_manager and state.env_manager.exists:
+                python_path = str(state.env_manager.python_executable)
+            state.kernel_manager = KernelManager(
+                str(state.project_dir), python_path=python_path
+            )
         assert state.file_manager is not None
         assert state.execution_log is not None
         assert state.ws_manager is not None

@@ -26,7 +26,12 @@ class PtyManager:
         self._running = False
         self._output_queue: asyncio.Queue[bytes] = asyncio.Queue()
 
-    async def start(self, command: str = "/bin/bash", cwd: str | None = None) -> None:
+    async def start(
+        self,
+        command: str = "/bin/bash",
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+    ) -> None:
         """Start a new PTY process."""
         if self._running:
             return
@@ -58,11 +63,11 @@ class PtyManager:
             if cwd:
                 os.chdir(cwd)
 
-            env = os.environ.copy()
-            env["TERM"] = "xterm-256color"
-            env["COLORTERM"] = "truecolor"
+            child_env = env if env is not None else os.environ.copy()
+            child_env["TERM"] = "xterm-256color"
+            child_env["COLORTERM"] = "truecolor"
 
-            os.execvpe(command, [command], env)
+            os.execvpe(command, [command], child_env)
         else:
             # Parent process: close slave, keep master for read/write
             os.close(slave_fd)

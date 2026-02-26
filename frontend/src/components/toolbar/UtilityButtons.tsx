@@ -1,4 +1,4 @@
-import { Save, Variable, GitBranch, ShieldCheck } from "lucide-react";
+import { Save, Variable, GitBranch, ShieldCheck, Package } from "lucide-react";
 import { ToolbarButton } from "./ToolbarButton";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -8,9 +8,11 @@ export function UtilityButtons() {
   const dirty = useNotebookStore((s) => s.dirty);
   const toggleVarExplorer = useUiStore((s) => s.toggleVariableExplorer);
   const toggleDepGraph = useUiStore((s) => s.toggleDependencyGraph);
+  const togglePackagePanel = useUiStore((s) => s.togglePackagePanel);
   const toggleConfirmOnRefresh = useUiStore((s) => s.toggleConfirmOnRefresh);
   const varExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
   const depGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
+  const packagePanelOpen = useUiStore((s) => s.packagePanelOpen);
   const confirmOnRefresh = useUiStore((s) => s.confirmOnRefresh);
 
   return (
@@ -39,6 +41,12 @@ export function UtilityButtons() {
         label="Dependency graph"
         onClick={toggleDepGraph}
         active={depGraphOpen}
+      />
+      <ToolbarButton
+        icon={Package}
+        label="Packages"
+        onClick={togglePackagePanel}
+        active={packagePanelOpen}
       />
     </div>
   );

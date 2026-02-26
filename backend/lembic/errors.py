@@ -39,3 +39,7 @@ class ProjectError(LembicError):
 
 class ExportError(LembicError):
     """Raised when export operations fail."""
+
+
+class EnvironmentError(LembicError):
+    """Raised when environment/venv operations fail."""

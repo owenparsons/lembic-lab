@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from lembic.services.cell_executor import CellExecutor
+    from lembic.services.env_manager import EnvironmentManager
     from lembic.services.execution_log import ExecutionLog
     from lembic.services.file_manager import FileManager
     from lembic.services.kernel_manager import KernelManager
@@ -21,6 +22,7 @@ class AppState:
     def __init__(self, project_dir: Path) -> None:
         self.project_dir = project_dir
         self.file_manager: FileManager | None = None
+        self.env_manager: EnvironmentManager | None = None
         self.kernel_manager: KernelManager | None = None
         self.pty_sessions: dict[str, PtyManager] = {}
         self.execution_log: ExecutionLog | None = None

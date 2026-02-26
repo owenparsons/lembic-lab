@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from lembic.server.state import AppState
+from lembic.services.env_manager import EnvironmentManager
 from lembic.services.execution_log import ExecutionLog
 from lembic.services.file_manager import FileManager
 from lembic.services.watcher import FileWatcher
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Initialize core services that don't need async setup
     state.file_manager = FileManager(state.project_dir)
+    state.env_manager = EnvironmentManager(state.project_dir)
     state.execution_log = ExecutionLog(state.project_dir / "execution_log.jsonl")
     state.ws_manager = ConnectionManager()
 
@@ -116,6 +118,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     from lembic.routers.export import router as export_router
     from lembic.routers.profile import router as profile_router
     from lembic.routers.variables import router as variables_router
+    from lembic.routers.environment import router as environment_router
 
     app.include_router(project_router)
     app.include_router(notebook_router)
@@ -124,6 +127,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     app.include_router(variables_router)
     app.include_router(profile_router)
     app.include_router(export_router)
+    app.include_router(environment_router)
 
     # Register WebSocket endpoints
     from lembic.ws.kernel import router as kernel_ws_router

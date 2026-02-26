@@ -1,4 +1,4 @@
-import { Plus, Terminal, X, Database, GitBranch, BarChart3 } from "lucide-react";
+import { Plus, Terminal, X, Database, GitBranch, BarChart3, Package } from "lucide-react";
 import { useTerminalStore } from "../../stores/terminalStore";
 import { useUiStore, type PanelTab } from "../../stores/uiStore";
 
@@ -6,12 +6,13 @@ const PANEL_TABS: {
   key: PanelTab;
   label: string;
   icon: typeof Database;
-  openKey: "variableExplorerOpen" | "dependencyGraphOpen" | "profilePanelOpen";
-  toggleKey: "toggleVariableExplorer" | "toggleDependencyGraph" | "toggleProfilePanel";
+  openKey: "variableExplorerOpen" | "dependencyGraphOpen" | "profilePanelOpen" | "packagePanelOpen";
+  toggleKey: "toggleVariableExplorer" | "toggleDependencyGraph" | "toggleProfilePanel" | "togglePackagePanel";
 }[] = [
   { key: "variables", label: "Variables", icon: Database, openKey: "variableExplorerOpen", toggleKey: "toggleVariableExplorer" },
   { key: "dependencies", label: "Dependencies", icon: GitBranch, openKey: "dependencyGraphOpen", toggleKey: "toggleDependencyGraph" },
   { key: "profile", label: "Data Profile", icon: BarChart3, openKey: "profilePanelOpen", toggleKey: "toggleProfilePanel" },
+  { key: "packages", label: "Packages", icon: Package, openKey: "packagePanelOpen", toggleKey: "togglePackagePanel" },
 ];
 
 export function TerminalTabBar() {
@@ -23,19 +24,23 @@ export function TerminalTabBar() {
   const variableExplorerOpen = useUiStore((s) => s.variableExplorerOpen);
   const dependencyGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
   const profilePanelOpen = useUiStore((s) => s.profilePanelOpen);
+  const packagePanelOpen = useUiStore((s) => s.packagePanelOpen);
   const toggleVariableExplorer = useUiStore((s) => s.toggleVariableExplorer);
   const toggleDependencyGraph = useUiStore((s) => s.toggleDependencyGraph);
   const toggleProfilePanel = useUiStore((s) => s.toggleProfilePanel);
+  const togglePackagePanel = useUiStore((s) => s.togglePackagePanel);
 
   const openState: Record<string, boolean> = {
     variableExplorerOpen,
     dependencyGraphOpen,
     profilePanelOpen,
+    packagePanelOpen,
   };
   const toggleFns: Record<string, () => void> = {
     toggleVariableExplorer,
     toggleDependencyGraph,
     toggleProfilePanel,
+    togglePackagePanel,
   };
 
   return (

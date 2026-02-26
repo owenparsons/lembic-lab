@@ -124,21 +124,46 @@ class PtyManager:
     async def shutdown(self) -> None:
         """Shut down the PTY process."""
         self._running = False
+
         if self._master_fd is not None:
             try:
                 asyncio.get_running_loop().remove_reader(self._master_fd)
             except Exception:
                 pass
-        if self._pid is not None:
+
+        pid = self._pid
+        self._pid = None
+
+        if pid is not None:
             try:
-                os.kill(self._pid, signal.SIGTERM)
-                os.waitpid(self._pid, 0)
-            except (OSError, ChildProcessError):
+                os.kill(pid, signal.SIGTERM)
+            except OSError:
                 pass
-            self._pid = None
+
+        # Close master fd — this also sends SIGHUP to the child's process
+        # group, which (together with SIGTERM) causes the shell to exit.
         if self._master_fd is not None:
             try:
                 os.close(self._master_fd)
             except OSError:
                 pass
             self._master_fd = None
+
+        # Reap the child process without blocking the event loop.
+        # Use WNOHANG in a loop with async sleeps instead of a blocking
+        # waitpid(pid, 0) which would freeze all WebSocket I/O.
+        if pid is not None:
+            for _ in range(100):  # up to 5 seconds
+                try:
+                    exited, _ = os.waitpid(pid, os.WNOHANG)
+                    if exited != 0:
+                        return
+                except (OSError, ChildProcessError):
+                    return
+                await asyncio.sleep(0.05)
+            # Still alive after 5s — force kill
+            try:
+                os.kill(pid, signal.SIGKILL)
+                os.waitpid(pid, 0)
+            except (OSError, ChildProcessError):
+                pass

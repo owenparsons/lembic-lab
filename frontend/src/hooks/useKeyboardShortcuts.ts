@@ -39,16 +39,20 @@ export function useKeyboardShortcuts() {
       const isTerminal = target.closest(".xterm") != null;
       if (e.shiftKey && e.key === "Enter" && !mod && !isInputElement && !isTerminal && selectedCellId) {
         e.preventDefault();
-        if (selectedCellId) {
-          const state = useNotebookStore.getState();
-          if (state.dirty.has(selectedCellId)) {
-            state.saveCell(selectedCellId).then(() => {
-              executionApi.runCell(selectedCellId);
-            });
-          } else {
-            executionApi.runCell(selectedCellId);
+        const cellId = selectedCellId;
+        const run = async () => {
+          const store = useNotebookStore.getState();
+          if (store.dirty.has(cellId)) {
+            await store.saveCell(cellId);
           }
-        }
+          const result = await executionApi.runCell(cellId);
+          // Ensure outputs are set from the HTTP response in case
+          // WebSocket updates were missed or batched away
+          if (result?.outputs) {
+            useNotebookStore.getState().setCellOutputs(cellId, result.outputs);
+          }
+        };
+        run();
         return;
       }
 
@@ -64,7 +68,10 @@ export function useKeyboardShortcuts() {
             if (store.dirty.has(selectedCellId)) {
               await store.saveCell(selectedCellId);
             }
-            await executionApi.runCell(selectedCellId);
+            const result = await executionApi.runCell(selectedCellId);
+            if (result?.outputs) {
+              useNotebookStore.getState().setCellOutputs(selectedCellId, result.outputs);
+            }
             // Advance to next cell
             if (idx < cells.length - 1) {
               selectCell(cells[idx + 1]!.id);

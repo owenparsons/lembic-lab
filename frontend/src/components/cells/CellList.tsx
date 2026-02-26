@@ -20,6 +20,7 @@ export function CellList() {
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
   const scrollToCellId = useNotebookStore((s) => s.scrollToCellId);
   const clearScrollTarget = useNotebookStore((s) => s.clearScrollTarget);
+  const setCellOutputs = useNotebookStore((s) => s.setCellOutputs);
   const selectedCellId = useUiStore((s) => s.selectedCellId);
   const selectCell = useUiStore((s) => s.selectCell);
   const setMode = useUiStore((s) => s.setMode);
@@ -89,7 +90,11 @@ export function CellList() {
     if (dirty.has(cellId)) {
       await saveCell(cellId);
     }
-    await executionApi.runCell(cellId);
+    const result = await executionApi.runCell(cellId);
+    // Set outputs from HTTP response as fallback to ensure they render
+    if (result?.outputs) {
+      setCellOutputs(cellId, result.outputs);
+    }
   };
 
   return (

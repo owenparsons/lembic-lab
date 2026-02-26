@@ -34,8 +34,10 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Shift+Enter: Run cell and stay
-      if (e.shiftKey && e.key === "Enter" && !mod && mode === "command") {
+      // Shift+Enter: Run cell and stay (works in both command and edit mode)
+      // Skip when focus is in terminal, input fields, or Monaco (which has its own binding)
+      const isTerminal = target.closest(".xterm") != null;
+      if (e.shiftKey && e.key === "Enter" && !mod && !isInputElement && !isTerminal && selectedCellId) {
         e.preventDefault();
         if (selectedCellId) {
           const state = useNotebookStore.getState();

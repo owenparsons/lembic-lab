@@ -33,6 +33,13 @@ class PtyManager:
 
         master_fd, slave_fd = pty.openpty()
 
+        # Set a default terminal size before fork so the shell starts with
+        # valid dimensions (macOS openpty() defaults to 0×0, which causes
+        # bash/readline to suppress the prompt).  The frontend sends the
+        # real dimensions once the WebSocket connects.
+        default_winsize = struct.pack("HHHH", 24, 80, 0, 0)
+        fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, default_winsize)
+
         child_pid = os.fork()
         if child_pid == 0:
             # Child process: close master, use slave for stdio

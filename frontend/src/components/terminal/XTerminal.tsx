@@ -24,6 +24,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
 
     const term = new Terminal({
       theme: XTERM_THEME,
@@ -38,19 +39,28 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
 
-    term.open(containerRef.current);
+    // Open immediately so the terminal can receive data from the WebSocket
+    term.open(container);
 
-    // Try WebGL addon
-    try {
-      const webglAddon = new WebglAddon();
-      term.loadAddon(webglAddon);
-    } catch {
-      // WebGL not available, fall back to canvas
-    }
-
-    fitAddon.fit();
+    // Store refs so the visibility effect can access them
     termRef.current = term;
     fitAddonRef.current = fitAddon;
+
+    // Defer WebGL addon + initial fit to the next frame.
+    // This ensures the container layout is fully settled and any prior
+    // WebGL contexts from disposed terminals have been cleaned up.
+    const initRafId = requestAnimationFrame(() => {
+      try {
+        const webglAddon = new WebglAddon();
+        webglAddon.onContextLoss(() => {
+          webglAddon.dispose();
+        });
+        term.loadAddon(webglAddon);
+      } catch {
+        // WebGL not available, fall back to canvas renderer
+      }
+      fitAddon.fit();
+    });
 
     // WebSocket connection
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -64,7 +74,8 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
 
     ws.onopen = () => {
       setSessionConnected(sessionId, true);
-      // Send initial size
+      // Re-fit to get definitive dimensions (layout is certainly settled by now)
+      fitAddon.fit();
       const dims = fitAddon.proposeDimensions();
       if (dims) {
         ws.send(
@@ -108,7 +119,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       }
     });
 
-    // ResizeObserver for fit — skip when hidden (performance: no need to refit invisible terminals)
+    // ResizeObserver — skip when hidden (performance: no need to refit invisible terminals)
     const resizeObserver = new ResizeObserver(() => {
       if (!visibleRef.current) return;
       fitAddon.fit();
@@ -119,9 +130,10 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
         );
       }
     });
-    resizeObserver.observe(containerRef.current);
+    resizeObserver.observe(container);
 
     return () => {
+      cancelAnimationFrame(initRafId);
       resizeObserver.disconnect();
       ws.close();
       term.dispose();

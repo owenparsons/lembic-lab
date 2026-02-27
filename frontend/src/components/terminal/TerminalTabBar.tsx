@@ -1,4 +1,4 @@
-import { Plus, Terminal, X, Database, GitBranch, BarChart3, Package } from "lucide-react";
+import { Plus, Terminal, X, Database, GitBranch, BarChart3, Package, Bot } from "lucide-react";
 import { useTerminalStore } from "../../stores/terminalStore";
 import { useUiStore, type PanelTab } from "../../stores/uiStore";
 
@@ -62,7 +62,9 @@ export function TerminalTabBar() {
                   : "bg-lb-bg-secondary text-lb-text-secondary hover:bg-lb-bg-tertiary"
               }`}
             >
-              <Terminal size={12} className="shrink-0 text-lb-text-secondary" />
+              {session.initCommand
+                ? <Bot size={12} className="shrink-0 text-lb-text-secondary" />
+                : <Terminal size={12} className="shrink-0 text-lb-text-secondary" />}
               <span className="truncate">{session.label}</span>
               <span
                 className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${

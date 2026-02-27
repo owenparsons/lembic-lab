@@ -100,6 +100,10 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
             JSON.stringify({ type: "resize", cols: dims.cols, rows: dims.rows }),
           );
         }
+        // Focus the terminal so the user can start typing immediately
+        if (visibleRef.current) {
+          term.focus();
+        }
         // Expose send function for injection bar
         onSendReady?.((message: string) => {
           if (ws.readyState === WebSocket.OPEN) {

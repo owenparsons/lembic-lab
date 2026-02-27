@@ -8,6 +8,10 @@ export interface TerminalSession {
   initCommand?: string;
 }
 
+export interface NotebookSettings {
+  close_terminal_on_exit: boolean;
+}
+
 let sessionCounter = 0;
 
 interface TerminalState {
@@ -15,6 +19,7 @@ interface TerminalState {
   activeSessionId: string | null;
   injectionMessage: string;
   attachments: TerminalAttachment[];
+  settings: NotebookSettings;
 
   addSession: (options?: { initCommand?: string }) => string;
   removeSession: (id: string) => void;
@@ -25,6 +30,7 @@ interface TerminalState {
   removeAttachment: (cellId: string) => void;
   clearAttachments: () => void;
   clearInjection: () => void;
+  fetchSettings: () => Promise<void>;
 }
 
 function generateSessionId(): string {
@@ -36,6 +42,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   activeSessionId: null,
   injectionMessage: "",
   attachments: [],
+  settings: { close_terminal_on_exit: true },
 
   addSession: (options) => {
     sessionCounter++;
@@ -102,4 +109,19 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   clearAttachments: () => set({ attachments: [] }),
 
   clearInjection: () => set({ injectionMessage: "", attachments: [] }),
+
+  fetchSettings: async () => {
+    try {
+      const res = await fetch("/api/notebook/settings");
+      if (res.ok) {
+        const data: NotebookSettings = await res.json();
+        set({ settings: data });
+      }
+    } catch {
+      // Keep defaults on failure
+    }
+  },
 }));
+
+// Fetch settings on module load
+useTerminalStore.getState().fetchSettings();

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 
 from lembic.models.cells import CellResponse, CellState
-from lembic.models.notebook import NotebookResponse, ReorderRequest
+from lembic.models.notebook import NotebookResponse, NotebookSettings, ReorderRequest
 from lembic.server.dependencies import get_file_manager
 from lembic.services.file_manager import FileManager
 
@@ -45,3 +45,24 @@ async def reorder_cells(
     """Reorder cells in the manifest."""
     fm.reorder_cells(request.cell_ids)
     return {"status": "ok"}
+
+
+@router.get("/settings", response_model=NotebookSettings)
+async def get_settings(fm: FileManager = Depends(get_file_manager)) -> NotebookSettings:
+    """Return the current notebook settings."""
+    manifest = fm.load_manifest()
+    return manifest.settings
+
+
+@router.put("/settings", response_model=NotebookSettings)
+async def update_settings(
+    updates: dict,
+    fm: FileManager = Depends(get_file_manager),
+) -> NotebookSettings:
+    """Partially update notebook settings."""
+    manifest = fm.load_manifest()
+    current = manifest.settings.model_dump()
+    current.update(updates)
+    manifest.settings = NotebookSettings(**current)
+    fm.save_manifest()
+    return manifest.settings

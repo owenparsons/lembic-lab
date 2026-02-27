@@ -21,6 +21,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
   const setSessionConnected = useTerminalStore((s) => s.setSessionConnected);
+  const removeSession = useTerminalStore((s) => s.removeSession);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -115,8 +116,21 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       ws.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {
           term.write(new Uint8Array(event.data));
-        } else {
-          term.write(event.data as string);
+        } else if (typeof event.data === "string") {
+          // Check for JSON control messages
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "shell_exited") {
+              const { settings } = useTerminalStore.getState();
+              if (settings.close_terminal_on_exit) {
+                removeSession(sessionId);
+              }
+              return;
+            }
+          } catch {
+            // Not JSON — regular text output
+          }
+          term.write(event.data);
         }
       };
 
@@ -168,7 +182,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       wsRef.current = null;
       fitAddonRef.current = null;
     };
-  }, [sessionId, setSessionConnected]);
+  }, [sessionId, setSessionConnected, removeSession]);
 
   // Re-fit when becoming visible
   useEffect(() => {

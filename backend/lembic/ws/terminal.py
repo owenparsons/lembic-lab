@@ -43,6 +43,11 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
                 await websocket.send_bytes(data)
         except Exception:
             pass
+        # Shell process has exited — notify the frontend
+        try:
+            await websocket.send_text(json.dumps({"type": "shell_exited"}))
+        except Exception:
+            pass
 
     read_task = asyncio.create_task(read_pty())
 

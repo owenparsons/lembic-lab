@@ -24,6 +24,9 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
     if not manifest_path.exists():
         manifest = {
             "name": name,
+            "settings": {
+                "close_terminal_on_exit": True,
+            },
             "cells": [],
         }
         manifest_path.write_text(yaml.dump(manifest, default_flow_style=False, sort_keys=False))

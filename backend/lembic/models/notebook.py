@@ -5,9 +5,17 @@ from pydantic import BaseModel, Field
 from .cells import CellEntry, CellResponse
 
 
+class NotebookSettings(BaseModel):
+    """Per-notebook settings stored in notebook.yaml."""
+
+    close_terminal_on_exit: bool = True
+
+
 class NotebookManifest(BaseModel):
     """The notebook manifest (notebook.yaml)."""
 
+    name: str = ""
+    settings: NotebookSettings = Field(default_factory=NotebookSettings)
     cells: list[CellEntry] = Field(default_factory=list)
 
 

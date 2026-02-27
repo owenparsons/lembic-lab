@@ -51,7 +51,11 @@ class FileManager:
                 "type": entry.cell_type.value,
                 "file": entry.file,
             })
-        data = {"cells": cells}
+        data: dict = {}
+        if manifest.name:
+            data["name"] = manifest.name
+        data["settings"] = manifest.settings.model_dump()
+        data["cells"] = cells
         self.manifest_path.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
 
     def invalidate_manifest(self) -> None:

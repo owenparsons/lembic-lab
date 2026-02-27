@@ -29,6 +29,7 @@ class PtyManager:
     async def start(
         self,
         command: str = "/bin/bash",
+        args: list[str] | None = None,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
     ) -> None:
@@ -66,8 +67,10 @@ class PtyManager:
             child_env = env if env is not None else os.environ.copy()
             child_env["TERM"] = "xterm-256color"
             child_env["COLORTERM"] = "truecolor"
+            child_env["BASH_SILENCE_DEPRECATION_WARNING"] = "1"
 
-            os.execvpe(command, [command], child_env)
+            cmd_args = args if args is not None else [command]
+            os.execvpe(command, cmd_args, child_env)
         else:
             # Parent process: close slave, keep master for read/write
             os.close(slave_fd)

@@ -28,15 +28,19 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
         env = None
         if state.env_manager and state.env_manager.exists:
             env = state.env_manager.get_shell_env()
-        await pty.start(cwd=str(state.project_dir), env=env)
+
+        # When an init_command is provided, start it directly via bash -c
+        # so there's no shell echo of the command.  After it exits, exec
+        # replaces the process with an interactive shell for the user.
+        args = None
+        if init_command:
+            args = ["/bin/bash", "-c", f"{init_command}; exec /bin/bash -i"]
+
+        await pty.start(cwd=str(state.project_dir), args=args, env=env)
         state.pty_sessions[session_id] = pty
 
         # Show branded banner before any shell output
         await websocket.send_bytes(TERMINAL_BANNER)
-
-        # Run initial command if provided (only on first creation)
-        if init_command:
-            await pty.write((init_command + "\n").encode("utf-8"))
     else:
         pty = state.pty_sessions[session_id]
 

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 
 from lembic.server.state import AppState
 from lembic.services.pty_manager import PtyManager
+from lembic.templates.terminal_banner import TERMINAL_BANNER
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -29,6 +30,9 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
             env = state.env_manager.get_shell_env()
         await pty.start(cwd=str(state.project_dir), env=env)
         state.pty_sessions[session_id] = pty
+
+        # Show branded banner before any shell output
+        await websocket.send_bytes(TERMINAL_BANNER)
 
         # Run initial command if provided (only on first creation)
         if init_command:

@@ -45,6 +45,21 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     termRef.current = term;
     fitAddonRef.current = fitAddon;
 
+    // Intercept Shift+Enter at the DOM level (capture phase, before xterm
+    // processes it) and send CSI u escape sequence so CLI tools like Claude
+    // Code can distinguish it from plain Enter (newline vs submit).
+    const handleShiftEnter = (ev: KeyboardEvent) => {
+      if (ev.key === "Enter" && ev.shiftKey && !ev.metaKey && !ev.ctrlKey) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(new TextEncoder().encode("\x1b[13;2u"));
+        }
+      }
+    };
+    container.addEventListener("keydown", handleShiftEnter, true);
+
     // Defer WebGL addon + initial fit to the next frame so the container
     // layout is fully settled and any prior WebGL contexts are cleaned up.
     const initRafId = requestAnimationFrame(() => {
@@ -138,6 +153,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
     resizeObserver.observe(container);
 
     return () => {
+      container.removeEventListener("keydown", handleShiftEnter, true);
       clearTimeout(wsTimer);
       cancelAnimationFrame(initRafId);
       resizeObserver.disconnect();

@@ -8,6 +8,7 @@ import { VariableExplorer } from "../panels/VariableExplorer";
 import { DependencyGraph } from "../panels/DependencyGraph";
 import { DataProfilePanel } from "../panels/DataProfilePanel";
 import { PackagePanel } from "../panels/PackagePanel";
+import { CheckpointPanel } from "../panels/CheckpointPanel";
 
 export function TerminalPane() {
   const sessions = useTerminalStore((s) => s.sessions);
@@ -79,6 +80,11 @@ export function TerminalPane() {
         {activePanelTab === "packages" && (
           <div className="absolute inset-0 overflow-hidden">
             <PackagePanel />
+          </div>
+        )}
+        {activePanelTab === "checkpoints" && (
+          <div className="absolute inset-0 overflow-hidden">
+            <CheckpointPanel />
           </div>
         )}
       </div>

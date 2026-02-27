@@ -1,4 +1,4 @@
-import { Plus, Terminal, X, Database, GitBranch, BarChart3, Package, Bot } from "lucide-react";
+import { Plus, Terminal, X, Database, GitBranch, BarChart3, Package, Bot, History } from "lucide-react";
 import { useTerminalStore } from "../../stores/terminalStore";
 import { useUiStore, type PanelTab } from "../../stores/uiStore";
 
@@ -6,13 +6,14 @@ const PANEL_TABS: {
   key: PanelTab;
   label: string;
   icon: typeof Database;
-  openKey: "variableExplorerOpen" | "dependencyGraphOpen" | "profilePanelOpen" | "packagePanelOpen";
-  toggleKey: "toggleVariableExplorer" | "toggleDependencyGraph" | "toggleProfilePanel" | "togglePackagePanel";
+  openKey: "variableExplorerOpen" | "dependencyGraphOpen" | "profilePanelOpen" | "packagePanelOpen" | "checkpointPanelOpen";
+  toggleKey: "toggleVariableExplorer" | "toggleDependencyGraph" | "toggleProfilePanel" | "togglePackagePanel" | "toggleCheckpointPanel";
 }[] = [
   { key: "variables", label: "Variables", icon: Database, openKey: "variableExplorerOpen", toggleKey: "toggleVariableExplorer" },
   { key: "dependencies", label: "Dependencies", icon: GitBranch, openKey: "dependencyGraphOpen", toggleKey: "toggleDependencyGraph" },
   { key: "profile", label: "Data Profile", icon: BarChart3, openKey: "profilePanelOpen", toggleKey: "toggleProfilePanel" },
   { key: "packages", label: "Packages", icon: Package, openKey: "packagePanelOpen", toggleKey: "togglePackagePanel" },
+  { key: "checkpoints", label: "Checkpoints", icon: History, openKey: "checkpointPanelOpen", toggleKey: "toggleCheckpointPanel" },
 ];
 
 export function TerminalTabBar() {
@@ -25,22 +26,26 @@ export function TerminalTabBar() {
   const dependencyGraphOpen = useUiStore((s) => s.dependencyGraphOpen);
   const profilePanelOpen = useUiStore((s) => s.profilePanelOpen);
   const packagePanelOpen = useUiStore((s) => s.packagePanelOpen);
+  const checkpointPanelOpen = useUiStore((s) => s.checkpointPanelOpen);
   const toggleVariableExplorer = useUiStore((s) => s.toggleVariableExplorer);
   const toggleDependencyGraph = useUiStore((s) => s.toggleDependencyGraph);
   const toggleProfilePanel = useUiStore((s) => s.toggleProfilePanel);
   const togglePackagePanel = useUiStore((s) => s.togglePackagePanel);
+  const toggleCheckpointPanel = useUiStore((s) => s.toggleCheckpointPanel);
 
   const openState: Record<string, boolean> = {
     variableExplorerOpen,
     dependencyGraphOpen,
     profilePanelOpen,
     packagePanelOpen,
+    checkpointPanelOpen,
   };
   const toggleFns: Record<string, () => void> = {
     toggleVariableExplorer,
     toggleDependencyGraph,
     toggleProfilePanel,
     togglePackagePanel,
+    toggleCheckpointPanel,
   };
 
   return (

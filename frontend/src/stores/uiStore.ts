@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type PanelTab = "variables" | "dependencies" | "profile" | "packages";
+export type PanelTab = "variables" | "dependencies" | "profile" | "packages" | "checkpoints";
 
 type PaneOrder = "notebook-terminal" | "terminal-notebook";
 type Mode = "command" | "edit";
@@ -15,6 +15,7 @@ interface UiState {
   profilePanelOpen: boolean;
   dependencyGraphOpen: boolean;
   packagePanelOpen: boolean;
+  checkpointPanelOpen: boolean;
   activePanelTab: PanelTab | null;
   confirmOnRefresh: boolean;
 
@@ -27,6 +28,7 @@ interface UiState {
   toggleProfilePanel: () => void;
   toggleDependencyGraph: () => void;
   togglePackagePanel: () => void;
+  toggleCheckpointPanel: () => void;
   toggleConfirmOnRefresh: () => void;
 }
 
@@ -41,6 +43,7 @@ export const useUiStore = create<UiState>()(
       profilePanelOpen: false,
       dependencyGraphOpen: false,
       packagePanelOpen: false,
+      checkpointPanelOpen: false,
       activePanelTab: null,
       confirmOnRefresh: false,
 
@@ -107,6 +110,19 @@ export const useUiStore = create<UiState>()(
             activePanelTab: opening
               ? "packages"
               : state.activePanelTab === "packages"
+                ? null
+                : state.activePanelTab,
+          };
+        }),
+
+      toggleCheckpointPanel: () =>
+        set((state) => {
+          const opening = !state.checkpointPanelOpen;
+          return {
+            checkpointPanelOpen: opening,
+            activePanelTab: opening
+              ? "checkpoints"
+              : state.activePanelTab === "checkpoints"
                 ? null
                 : state.activePanelTab,
           };

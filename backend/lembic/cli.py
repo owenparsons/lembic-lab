@@ -309,3 +309,57 @@ def log(cell_id: str | None, limit: int) -> None:
         ts = event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
         name = names.get(event.cell_id, event.cell_id)
         click.echo(f"  {ts}  {name:<20s}  {event.author.value}")
+
+
+# ---------------------------------------------------------------------------
+# Checkpoint commands
+# ---------------------------------------------------------------------------
+
+
+@cli.group("checkpoints")
+def checkpoints_group() -> None:
+    """Manage auto-checkpoints."""
+    pass
+
+
+@checkpoints_group.command("list")
+@click.option("--limit", default=20, help="Max checkpoints to show")
+def checkpoints_list(limit: int) -> None:
+    """List recent auto-checkpoints."""
+    from lembic.services.checkpoint import CheckpointManager
+
+    project_dir = Path.cwd()
+    cm = CheckpointManager(project_dir)
+
+    if not cm.is_git_repo:
+        click.echo("Not a git repository — checkpoints disabled.")
+        return
+
+    cps = cm.list_checkpoints(limit)
+    if not cps:
+        click.echo("No checkpoints found.")
+        return
+
+    for cp in cps:
+        click.echo(f"  {cp.hash[:8]}  {cp.timestamp}  {cp.message}")
+
+
+@checkpoints_group.command("revert")
+@click.argument("commit_hash")
+def checkpoints_revert(commit_hash: str) -> None:
+    """Revert to a checkpoint."""
+    from lembic.services.checkpoint import CheckpointManager
+
+    project_dir = Path.cwd()
+    cm = CheckpointManager(project_dir)
+
+    if not cm.is_git_repo:
+        click.echo("Not a git repository — checkpoints disabled.", err=True)
+        sys.exit(1)
+
+    success = cm.revert_to_checkpoint(commit_hash)
+    if success:
+        click.echo(f"Reverted to checkpoint {commit_hash[:8]}")
+    else:
+        click.echo(f"Failed to revert to {commit_hash[:8]}", err=True)
+        sys.exit(1)

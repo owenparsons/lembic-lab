@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from lembic.models.changes import ChangeAuthor
 from lembic.server.state import AppState
 from lembic.services.change_log import ChangeLog
+from lembic.services.checkpoint import CheckpointManager
 from lembic.services.env_manager import EnvironmentManager
 from lembic.services.execution_log import ExecutionLog
 from lembic.services.file_manager import FileManager
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     state.env_manager = EnvironmentManager(state.project_dir)
     state.execution_log = ExecutionLog(state.project_dir / "execution_log.jsonl")
     state.change_log = ChangeLog(state.project_dir / ".notebook" / "changes.jsonl")
+    state.checkpoint_manager = CheckpointManager(state.project_dir)
     state.ws_manager = ConnectionManager()
 
     # File watcher for live-reload
@@ -67,6 +69,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             # Log change — skip if this was a recent API write (de-dup)
             api_hash = state._api_write_hashes.pop(cell_id, None)
             if api_hash != new_hash and state.change_log is not None:
+                # Auto-checkpoint before external (CC) changes
+                if state.checkpoint_manager is not None:
+                    state.checkpoint_manager.create_checkpoint(f"before external edit of {cell_id}")
                 state.change_log.append(cell_id, ChangeAuthor.EXTERNAL, new_hash)
 
             await ws_manager.broadcast_filewatcher(
@@ -128,6 +133,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     from lembic.routers.profile import router as profile_router
     from lembic.routers.variables import router as variables_router
     from lembic.routers.environment import router as environment_router
+    from lembic.routers.checkpoints import router as checkpoints_router
 
     app.include_router(project_router)
     app.include_router(notebook_router)
@@ -137,6 +143,7 @@ def create_app(project_dir: str | Path | None = None) -> FastAPI:
     app.include_router(profile_router)
     app.include_router(export_router)
     app.include_router(environment_router)
+    app.include_router(checkpoints_router)
 
     # Register WebSocket endpoints
     from lembic.ws.kernel import router as kernel_ws_router

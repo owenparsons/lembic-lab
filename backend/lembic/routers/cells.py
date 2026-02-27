@@ -38,6 +38,7 @@ async def list_cells(
                 file=entry.file,
                 content=content,
                 state=CellState.IDLE,
+                annotation=entry.annotation,
                 last_author=change.author.value if change else None,
                 last_modified=change.timestamp.isoformat() if change else None,
             )
@@ -85,6 +86,7 @@ async def get_cell(
         file=entry.file,
         content=content,
         state=CellState.IDLE,
+        annotation=entry.annotation,
         last_author=change.author.value if change else None,
         last_modified=change.timestamp.isoformat() if change else None,
     )
@@ -114,6 +116,11 @@ async def update_cell(
         if state.change_log is not None:
             state.change_log.append(cell_id, ChangeAuthor.USER, content_hash)
 
+    if request.annotation is not None:
+        entry.annotation = request.annotation
+        fm.save_manifest()
+        entry = fm.get_cell_entry(cell_id)
+
     content = fm.read_cell(cell_id)
     change = state.change_log.last_change_for_cell(cell_id) if state.change_log else None
     return CellResponse(
@@ -123,6 +130,7 @@ async def update_cell(
         file=entry.file,
         content=content,
         state=CellState.IDLE,
+        annotation=entry.annotation,
         last_author=change.author.value if change else None,
         last_modified=change.timestamp.isoformat() if change else None,
     )

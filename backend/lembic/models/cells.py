@@ -21,6 +21,13 @@ class CellState(str, Enum):
     STALE_UPSTREAM = "stale_upstream"
 
 
+class CellAnnotation(BaseModel):
+    """A per-cell annotation (note, warning, etc.)."""
+
+    text: str
+    style: str = "info"  # info | warning | success | error
+
+
 class CellEntry(BaseModel):
     """A cell entry in the notebook manifest."""
 
@@ -28,6 +35,7 @@ class CellEntry(BaseModel):
     name: str
     cell_type: CellType = Field(alias="type")
     file: str
+    annotation: CellAnnotation | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -48,6 +56,7 @@ class CellUpdate(BaseModel):
 
     name: str | None = None
     content: str | None = None
+    annotation: CellAnnotation | None = None
 
 
 class CellResponse(BaseModel):
@@ -60,6 +69,7 @@ class CellResponse(BaseModel):
     content: str = ""
     state: CellState = CellState.IDLE
     outputs: list[dict[str, Any]] = Field(default_factory=list)
+    annotation: CellAnnotation | None = None
     last_author: str | None = None  # "user" | "external"
     last_modified: str | None = None  # ISO 8601
 

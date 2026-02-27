@@ -1,9 +1,12 @@
 """Notebook manifest endpoints."""
 
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from lembic.models.cells import CellResponse, CellState
-from lembic.models.notebook import NotebookResponse, NotebookSettings, ReorderRequest
+from lembic.models.notebook import NotebookResponse, NotebookSection, NotebookSettings, ReorderRequest
 from lembic.server.dependencies import get_file_manager, get_state
 from lembic.server.state import AppState
 from lembic.services.file_manager import FileManager
@@ -30,11 +33,12 @@ async def get_notebook(
                 file=entry.file,
                 content=content,
                 state=CellState.IDLE,
+                annotation=entry.annotation,
                 last_author=change.author.value if change else None,
                 last_modified=change.timestamp.isoformat() if change else None,
             )
         )
-    return NotebookResponse(cells=cells)
+    return NotebookResponse(cells=cells, sections=manifest.sections)
 
 
 @router.post("/save")
@@ -73,3 +77,67 @@ async def update_settings(
     manifest.settings = NotebookSettings(**current)
     fm.save_manifest()
     return manifest.settings
+
+
+# --- Sections ---
+
+
+class SectionCreate(BaseModel):
+    name: str
+    starts_at: str  # cell_id
+
+
+@router.get("/sections", response_model=list[NotebookSection])
+async def list_sections(fm: FileManager = Depends(get_file_manager)) -> list[NotebookSection]:
+    manifest = fm.load_manifest()
+    return manifest.sections
+
+
+@router.post("/sections", response_model=NotebookSection, status_code=201)
+async def create_section(
+    request: SectionCreate,
+    fm: FileManager = Depends(get_file_manager),
+) -> NotebookSection:
+    manifest = fm.load_manifest()
+    section = NotebookSection(
+        id=uuid.uuid4().hex[:8],
+        name=request.name,
+        starts_at=request.starts_at,
+    )
+    manifest.sections.append(section)
+    fm.save_manifest()
+    return section
+
+
+@router.delete("/sections/{section_id}")
+async def delete_section(
+    section_id: str,
+    fm: FileManager = Depends(get_file_manager),
+) -> dict[str, str]:
+    manifest = fm.load_manifest()
+    before = len(manifest.sections)
+    manifest.sections = [s for s in manifest.sections if s.id != section_id]
+    if len(manifest.sections) == before:
+        raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")
+    fm.save_manifest()
+    return {"status": "ok"}
+
+
+@router.put("/sections/{section_id}", response_model=NotebookSection)
+async def update_section(
+    section_id: str,
+    updates: dict,
+    fm: FileManager = Depends(get_file_manager),
+) -> NotebookSection:
+    manifest = fm.load_manifest()
+    for section in manifest.sections:
+        if section.id == section_id:
+            if "name" in updates:
+                section.name = updates["name"]
+            if "collapsed" in updates:
+                section.collapsed = updates["collapsed"]
+            if "starts_at" in updates:
+                section.starts_at = updates["starts_at"]
+            fm.save_manifest()
+            return section
+    raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")

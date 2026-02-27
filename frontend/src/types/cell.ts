@@ -27,6 +27,18 @@ export interface CellUpdate {
   content?: string;
 }
 
+export interface CellAnnotation {
+  text: string;
+  style: "info" | "warning" | "success" | "error";
+}
+
+export interface NotebookSection {
+  id: string;
+  name: string;
+  starts_at: string; // cell_id
+  collapsed: boolean;
+}
+
 export interface CellResponse {
   id: string;
   name: string;
@@ -35,6 +47,7 @@ export interface CellResponse {
   content: string;
   state: CellState;
   outputs: CellOutput[];
+  annotation?: CellAnnotation | null;
   last_author?: string | null; // "user" | "external"
   last_modified?: string | null; // ISO 8601
 }

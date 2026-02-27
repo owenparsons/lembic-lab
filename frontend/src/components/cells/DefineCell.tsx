@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import type { CellResponse } from "../../types/cell";
+import { CellAnnotationBanner } from "./CellAnnotationBanner";
 import { CellHeader } from "./CellHeader";
 import { MonacoWrapper } from "../editor/MonacoWrapper";
 import { useNotebookStore } from "../../stores/notebookStore";
@@ -23,6 +24,7 @@ export function DefineCell({ cell, isSelected, onRun }: DefineCellProps) {
 
   return (
     <div>
+      {cell.annotation && <CellAnnotationBanner annotation={cell.annotation} />}
       <CellHeader cell={cell} onRun={onRun} isSelected={isSelected} />
       <div
         className="flex cursor-pointer items-center gap-2 rounded-b-md bg-lb-bg-secondary px-3 py-2"

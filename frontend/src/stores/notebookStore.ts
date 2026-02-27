@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import type { CellCreate, CellOutput, CellResponse, CellState } from "../types/cell";
+import type { CellCreate, CellOutput, CellResponse, CellState, NotebookSection } from "../types/cell";
 import { cellApi } from "../services/cellApi";
 import { notebookApi } from "../services/notebookApi";
 
 interface NotebookState {
   cells: CellResponse[];
+  sections: NotebookSection[];
   contents: Record<string, string>; // cellId → current editor content
   dirty: Set<string>; // cells modified since last save
   loading: boolean;
@@ -27,10 +28,12 @@ interface NotebookState {
   setCells: (cells: CellResponse[]) => void;
   moveCell: (cellId: string, afterId: string | null) => Promise<void>;
   clearScrollTarget: () => void;
+  toggleSection: (sectionId: string) => void;
 }
 
 export const useNotebookStore = create<NotebookState>((set, get) => ({
   cells: [],
+  sections: [],
   contents: {},
   dirty: new Set(),
   loading: false,
@@ -57,7 +60,7 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
       const newCells = data.cells.filter((c) => !oldCellIds.has(c.id));
       const lastNew = newCells[newCells.length - 1];
       const scrollToCellId = lastNew?.id ?? get().scrollToCellId;
-      set({ cells: data.cells, contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false, scrollToCellId });
+      set({ cells: data.cells, sections: data.sections ?? [], contents, dirty: new Set(), loading: false, error: null, pendingRefresh: false, scrollToCellId });
     } catch (e) {
       const message = e instanceof Error
         ? (e.name === "AbortError" ? "Backend not reachable (request timed out)" : e.message)
@@ -190,6 +193,14 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
   setCells: (cells) => set({ cells }),
 
   clearScrollTarget: () => set({ scrollToCellId: null }),
+
+  toggleSection: (sectionId) => {
+    set((state) => ({
+      sections: state.sections.map((s) =>
+        s.id === sectionId ? { ...s, collapsed: !s.collapsed } : s,
+      ),
+    }));
+  },
 
   moveCell: async (cellId, afterId) => {
     await cellApi.move(cellId, { after_id: afterId });

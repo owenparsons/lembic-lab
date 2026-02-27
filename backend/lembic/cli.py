@@ -363,3 +363,86 @@ def checkpoints_revert(commit_hash: str) -> None:
     else:
         click.echo(f"Failed to revert to {commit_hash[:8]}", err=True)
         sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Annotation command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("annotate")
+@click.argument("cell_id")
+@click.argument("text", required=False)
+@click.option("--style", default="info", type=click.Choice(["info", "warning", "success", "error"]))
+@click.option("--clear", is_flag=True, help="Remove the annotation")
+def annotate(cell_id: str, text: str | None, style: str, clear: bool) -> None:
+    """Add or remove an annotation on a cell."""
+    from lembic.models.cells import CellAnnotation
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    entry = fm.get_cell_entry(cell_id)
+
+    if clear:
+        entry.annotation = None
+        fm.save_manifest()
+        click.echo(f"Cleared annotation on {entry.name}")
+    elif text:
+        entry.annotation = CellAnnotation(text=text, style=style)
+        fm.save_manifest()
+        click.echo(f"Annotated {entry.name}: [{style}] {text}")
+    else:
+        click.echo("Error: provide annotation text or --clear", err=True)
+        sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Section commands
+# ---------------------------------------------------------------------------
+
+
+@cli.command("add-section")
+@click.argument("name")
+@click.option("--before", "before_cell_id", required=True, help="Cell ID where section starts")
+def add_section(name: str, before_cell_id: str) -> None:
+    """Add a section divider before a cell."""
+    import uuid
+
+    from lembic.models.notebook import NotebookSection
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    # Validate cell exists
+    fm.get_cell_entry(before_cell_id)
+    manifest = fm.load_manifest()
+
+    section = NotebookSection(
+        id=uuid.uuid4().hex[:8],
+        name=name,
+        starts_at=before_cell_id,
+    )
+    manifest.sections.append(section)
+    fm.save_manifest()
+    click.echo(f"Added section '{name}' (id={section.id}) before {before_cell_id}")
+
+
+@cli.command("delete-section")
+@click.argument("section_id")
+def delete_section(section_id: str) -> None:
+    """Remove a section divider."""
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    manifest = fm.load_manifest()
+
+    before = len(manifest.sections)
+    manifest.sections = [s for s in manifest.sections if s.id != section_id]
+    if len(manifest.sections) == before:
+        click.echo(f"Section not found: {section_id}", err=True)
+        sys.exit(1)
+
+    fm.save_manifest()
+    click.echo(f"Deleted section {section_id}")

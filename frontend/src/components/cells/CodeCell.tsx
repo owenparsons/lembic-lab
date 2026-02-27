@@ -1,4 +1,5 @@
 import type { CellResponse } from "../../types/cell";
+import { CellAnnotationBanner } from "./CellAnnotationBanner";
 import { CellHeader } from "./CellHeader";
 import { OutputRenderer } from "../output/OutputRenderer";
 import { MonacoWrapper } from "../editor/MonacoWrapper";
@@ -28,6 +29,7 @@ export function CodeCell({ cell, isSelected, onRun }: CodeCellProps) {
 
   return (
     <div>
+      {cell.annotation && <CellAnnotationBanner annotation={cell.annotation} />}
       <CellHeader cell={cell} onRun={onRun} isSelected={isSelected} />
       {isEditing ? (
         <MonacoWrapper

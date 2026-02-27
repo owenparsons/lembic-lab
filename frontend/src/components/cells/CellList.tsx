@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNotebookStore } from "../../stores/notebookStore";
 import { useUiStore } from "../../stores/uiStore";
 import { CodeCell } from "./CodeCell";
 import { MarkdownCell } from "./MarkdownCell";
 import { DefineCell } from "./DefineCell";
 import { AddCellButton } from "./AddCellButton";
+import { SectionDivider } from "./SectionDivider";
 import { executionApi } from "../../services/executionApi";
 import { Plus, RefreshCw } from "lucide-react";
 
@@ -18,6 +19,8 @@ export function CellList() {
   const saveCell = useNotebookStore((s) => s.saveCell);
   const addCell = useNotebookStore((s) => s.addCell);
   const loadNotebook = useNotebookStore((s) => s.loadNotebook);
+  const sections = useNotebookStore((s) => s.sections);
+  const toggleSection = useNotebookStore((s) => s.toggleSection);
   const scrollToCellId = useNotebookStore((s) => s.scrollToCellId);
   const clearScrollTarget = useNotebookStore((s) => s.clearScrollTarget);
   const setCellOutputs = useNotebookStore((s) => s.setCellOutputs);
@@ -97,6 +100,31 @@ export function CellList() {
     }
   };
 
+  // Build a map of cell_id → section (for cells that start a section)
+  const sectionByStartCell = useMemo(() => {
+    const map = new Map<string, typeof sections[number]>();
+    for (const s of sections) {
+      map.set(s.starts_at, s);
+    }
+    return map;
+  }, [sections]);
+
+  // Build set of cell IDs hidden by collapsed sections
+  const hiddenCells = useMemo(() => {
+    const hidden = new Set<string>();
+    let collapsedSection: string | null = null;
+    for (const cell of cells) {
+      const section = sectionByStartCell.get(cell.id);
+      if (section) {
+        collapsedSection = section.collapsed ? section.id : null;
+      }
+      if (collapsedSection) {
+        hidden.add(cell.id);
+      }
+    }
+    return hidden;
+  }, [cells, sectionByStartCell]);
+
   return (
     <div ref={containerRef} className="space-y-0 p-4">
       {pendingRefresh && (
@@ -120,6 +148,8 @@ export function CellList() {
       )}
       <AddCellButton afterId={null} />
       {cells.map((cell) => {
+        const section = sectionByStartCell.get(cell.id);
+        const isHidden = hiddenCells.has(cell.id);
         const isSelected = selectedCellId === cell.id;
         const commonProps = {
           cell,
@@ -128,24 +158,33 @@ export function CellList() {
         };
 
         return (
-          <div
-            key={cell.id}
-            data-cell-id={cell.id}
-            onClick={() => selectCell(cell.id)}
-            className={`rounded-md border transition-colors ${
-              isSelected
-                ? "border-lb-accent-primary/50"
-                : "border-lb-border-primary hover:border-lb-border-primary/80"
-            }`}
-          >
-            {cell.type === "markdown" ? (
-              <MarkdownCell {...commonProps} />
-            ) : cell.type === "define" ? (
-              <DefineCell {...commonProps} />
-            ) : (
-              <CodeCell {...commonProps} />
+          <div key={cell.id}>
+            {section && (
+              <SectionDivider
+                section={section}
+                onToggle={() => toggleSection(section.id)}
+              />
             )}
-            <AddCellButton afterId={cell.id} />
+            {!isHidden && (
+              <div
+                data-cell-id={cell.id}
+                onClick={() => selectCell(cell.id)}
+                className={`rounded-md border transition-colors ${
+                  isSelected
+                    ? "border-lb-accent-primary/50"
+                    : "border-lb-border-primary hover:border-lb-border-primary/80"
+                }`}
+              >
+                {cell.type === "markdown" ? (
+                  <MarkdownCell {...commonProps} />
+                ) : cell.type === "define" ? (
+                  <DefineCell {...commonProps} />
+                ) : (
+                  <CodeCell {...commonProps} />
+                )}
+                <AddCellButton afterId={cell.id} />
+              </div>
+            )}
           </div>
         );
       })}

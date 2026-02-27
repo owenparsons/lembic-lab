@@ -2,6 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { CellResponse } from "../../types/cell";
+import { CellAnnotationBanner } from "./CellAnnotationBanner";
 import { CellHeader } from "./CellHeader";
 import { MonacoWrapper } from "../editor/MonacoWrapper";
 import { useNotebookStore } from "../../stores/notebookStore";
@@ -20,6 +21,7 @@ export function MarkdownCell({ cell, isSelected, onRun }: MarkdownCellProps) {
 
   return (
     <div>
+      {cell.annotation && <CellAnnotationBanner annotation={cell.annotation} />}
       <CellHeader cell={cell} onRun={onRun} isSelected={isSelected} />
       {editing ? (
         <MonacoWrapper

@@ -12,6 +12,7 @@ from lembic.models.cells import (
     CellState,
     CellUpdate,
 )
+from lembic.models.changes import ChangeAuthor
 from lembic.server.dependencies import get_file_manager, get_state
 from lembic.server.state import AppState
 from lembic.services.file_manager import FileManager
@@ -20,11 +21,15 @@ router = APIRouter(prefix="/api/cells", tags=["cells"])
 
 
 @router.get("", response_model=list[CellResponse])
-async def list_cells(fm: FileManager = Depends(get_file_manager)) -> list[CellResponse]:
+async def list_cells(
+    fm: FileManager = Depends(get_file_manager),
+    state: AppState = Depends(get_state),
+) -> list[CellResponse]:
     manifest = fm.load_manifest()
     cells = []
     for entry in manifest.cells:
         content = fm.read_cell(entry.id)
+        change = state.change_log.last_change_for_cell(entry.id) if state.change_log else None
         cells.append(
             CellResponse(
                 id=entry.id,
@@ -33,6 +38,8 @@ async def list_cells(fm: FileManager = Depends(get_file_manager)) -> list[CellRe
                 file=entry.file,
                 content=content,
                 state=CellState.IDLE,
+                last_author=change.author.value if change else None,
+                last_modified=change.timestamp.isoformat() if change else None,
             )
         )
     return cells
@@ -63,12 +70,14 @@ async def create_cell(
 async def get_cell(
     cell_id: str,
     fm: FileManager = Depends(get_file_manager),
+    state: AppState = Depends(get_state),
 ) -> CellResponse:
     try:
         entry = fm.get_cell_entry(cell_id)
     except CellNotFoundError:
         raise HTTPException(status_code=404, detail=f"Cell not found: {cell_id}")
     content = fm.read_cell(cell_id)
+    change = state.change_log.last_change_for_cell(cell_id) if state.change_log else None
     return CellResponse(
         id=entry.id,
         name=entry.name,
@@ -76,6 +85,8 @@ async def get_cell(
         file=entry.file,
         content=content,
         state=CellState.IDLE,
+        last_author=change.author.value if change else None,
+        last_modified=change.timestamp.isoformat() if change else None,
     )
 
 
@@ -84,6 +95,7 @@ async def update_cell(
     cell_id: str,
     request: CellUpdate,
     fm: FileManager = Depends(get_file_manager),
+    state: AppState = Depends(get_state),
 ) -> CellResponse:
     try:
         entry = fm.get_cell_entry(cell_id)
@@ -96,8 +108,14 @@ async def update_cell(
 
     if request.content is not None:
         fm.write_cell(cell_id, request.content)
+        # Record user change and set de-dup hash so watcher skips it
+        content_hash = fm.cell_content_hash(cell_id)
+        state._api_write_hashes[cell_id] = content_hash
+        if state.change_log is not None:
+            state.change_log.append(cell_id, ChangeAuthor.USER, content_hash)
 
     content = fm.read_cell(cell_id)
+    change = state.change_log.last_change_for_cell(cell_id) if state.change_log else None
     return CellResponse(
         id=entry.id,
         name=entry.name,
@@ -105,6 +123,8 @@ async def update_cell(
         file=entry.file,
         content=content,
         state=CellState.IDLE,
+        last_author=change.author.value if change else None,
+        last_modified=change.timestamp.isoformat() if change else None,
     )
 
 

@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Bot, Play, User } from "lucide-react";
 import type { CellResponse } from "../../types/cell";
 import { CellStateIcon } from "./CellStateIcon";
 import { IconButton } from "../shared/IconButton";
@@ -8,6 +8,26 @@ interface CellHeaderProps {
   cell: CellResponse;
   onRun: () => void;
   isSelected: boolean;
+}
+
+function AuthorBadge({ author }: { author: string | null | undefined }) {
+  if (!author) return null;
+
+  if (author === "external") {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium bg-purple-500/15 text-purple-400">
+        <Bot size={10} />
+        CC
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium bg-blue-500/15 text-blue-400">
+      <User size={10} />
+      you
+    </span>
+  );
 }
 
 export function CellHeader({ cell, onRun, isSelected }: CellHeaderProps) {
@@ -30,6 +50,7 @@ export function CellHeader({ cell, onRun, isSelected }: CellHeaderProps) {
         {cell.name}
       </span>
       <span className="text-xs text-lb-text-muted">{cell.type}</span>
+      <AuthorBadge author={cell.last_author} />
       <div className="flex-1" />
       {isRunning && (
         <span className="text-xs text-lb-state-running">running...</span>

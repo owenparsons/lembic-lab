@@ -60,6 +60,8 @@ class CellResponse(BaseModel):
     content: str = ""
     state: CellState = CellState.IDLE
     outputs: list[dict[str, Any]] = Field(default_factory=list)
+    last_author: str | None = None  # "user" | "external"
+    last_modified: str | None = None  # ISO 8601
 
     model_config = {"populate_by_name": True}
 

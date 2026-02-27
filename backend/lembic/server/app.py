@@ -12,7 +12,9 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from lembic.models.changes import ChangeAuthor
 from lembic.server.state import AppState
+from lembic.services.change_log import ChangeLog
 from lembic.services.env_manager import EnvironmentManager
 from lembic.services.execution_log import ExecutionLog
 from lembic.services.file_manager import FileManager
@@ -31,6 +33,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     state.file_manager = FileManager(state.project_dir)
     state.env_manager = EnvironmentManager(state.project_dir)
     state.execution_log = ExecutionLog(state.project_dir / "execution_log.jsonl")
+    state.change_log = ChangeLog(state.project_dir / ".notebook" / "changes.jsonl")
     state.ws_manager = ConnectionManager()
 
     # File watcher for live-reload
@@ -60,6 +63,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 content = Path(path).read_text()
             except OSError:
                 return
+
+            # Log change — skip if this was a recent API write (de-dup)
+            api_hash = state._api_write_hashes.pop(cell_id, None)
+            if api_hash != new_hash and state.change_log is not None:
+                state.change_log.append(cell_id, ChangeAuthor.EXTERNAL, new_hash)
+
             await ws_manager.broadcast_filewatcher(
                 {
                     "type": "cell_modified",

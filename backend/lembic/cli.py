@@ -274,3 +274,38 @@ def variables(port: int) -> None:
         if len(preview) > 60:
             preview = preview[:57] + "..."
         click.echo(f"{v['name']:<{name_w}}  {v['var_type']:<{type_w}}  {preview}")
+
+
+# ---------------------------------------------------------------------------
+# Change log command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("log")
+@click.option("--cell", "cell_id", default=None, help="Filter by cell ID")
+@click.option("--limit", default=20, help="Max entries to show")
+def log(cell_id: str | None, limit: int) -> None:
+    """Show recent cell changes with author attribution."""
+    from lembic.services.change_log import ChangeLog
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    cl = ChangeLog(project_dir / ".notebook" / "changes.jsonl")
+    fm = FileManager(project_dir)
+    manifest = fm.load_manifest()
+    names = {c.id: c.name for c in manifest.cells}
+
+    events = cl.read_all()
+    if cell_id:
+        events = [e for e in events if e.cell_id == cell_id]
+
+    events = events[-limit:]
+
+    if not events:
+        click.echo("No changes recorded.")
+        return
+
+    for event in reversed(events):
+        ts = event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        name = names.get(event.cell_id, event.cell_id)
+        click.echo(f"  {ts}  {name:<20s}  {event.author.value}")

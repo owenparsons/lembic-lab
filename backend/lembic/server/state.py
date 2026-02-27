@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from lembic.services.cell_executor import CellExecutor
+    from lembic.services.change_log import ChangeLog
     from lembic.services.env_manager import EnvironmentManager
     from lembic.services.execution_log import ExecutionLog
     from lembic.services.file_manager import FileManager
@@ -29,3 +30,6 @@ class AppState:
         self.cell_executor: CellExecutor | None = None
         self.ws_manager: ConnectionManager | None = None
         self.file_watcher: FileWatcher | None = None
+        self.change_log: ChangeLog | None = None
+        # Hashes of recent API writes — used to de-duplicate watcher events
+        self._api_write_hashes: dict[str, str] = {}

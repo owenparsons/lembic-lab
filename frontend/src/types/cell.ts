@@ -35,6 +35,8 @@ export interface CellResponse {
   content: string;
   state: CellState;
   outputs: CellOutput[];
+  last_author?: string | null; // "user" | "external"
+  last_modified?: string | null; // ISO 8601
 }
 
 export interface CellMoveRequest {

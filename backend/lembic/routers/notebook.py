@@ -4,19 +4,24 @@ from fastapi import APIRouter, Depends
 
 from lembic.models.cells import CellResponse, CellState
 from lembic.models.notebook import NotebookResponse, NotebookSettings, ReorderRequest
-from lembic.server.dependencies import get_file_manager
+from lembic.server.dependencies import get_file_manager, get_state
+from lembic.server.state import AppState
 from lembic.services.file_manager import FileManager
 
 router = APIRouter(prefix="/api/notebook", tags=["notebook"])
 
 
 @router.get("", response_model=NotebookResponse)
-async def get_notebook(fm: FileManager = Depends(get_file_manager)) -> NotebookResponse:
+async def get_notebook(
+    fm: FileManager = Depends(get_file_manager),
+    state: AppState = Depends(get_state),
+) -> NotebookResponse:
     """Load the full notebook: manifest + all cell contents."""
     manifest = fm.load_manifest()
     cells: list[CellResponse] = []
     for entry in manifest.cells:
         content = fm.read_cell(entry.id)
+        change = state.change_log.last_change_for_cell(entry.id) if state.change_log else None
         cells.append(
             CellResponse(
                 id=entry.id,
@@ -25,6 +30,8 @@ async def get_notebook(fm: FileManager = Depends(get_file_manager)) -> NotebookR
                 file=entry.file,
                 content=content,
                 state=CellState.IDLE,
+                last_author=change.author.value if change else None,
+                last_modified=change.timestamp.isoformat() if change else None,
             )
         )
     return NotebookResponse(cells=cells)

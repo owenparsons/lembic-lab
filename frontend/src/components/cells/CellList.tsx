@@ -29,6 +29,31 @@ export function CellList() {
   const setMode = useUiStore((s) => s.setMode);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Build a map of cell_id → section (for cells that start a section)
+  const sectionByStartCell = useMemo(() => {
+    const map = new Map<string, typeof sections[number]>();
+    for (const s of sections) {
+      map.set(s.starts_at, s);
+    }
+    return map;
+  }, [sections]);
+
+  // Build set of cell IDs hidden by collapsed sections
+  const hiddenCells = useMemo(() => {
+    const hidden = new Set<string>();
+    let collapsedSection: string | null = null;
+    for (const cell of cells) {
+      const section = sectionByStartCell.get(cell.id);
+      if (section) {
+        collapsedSection = section.collapsed ? section.id : null;
+      }
+      if (collapsedSection) {
+        hidden.add(cell.id);
+      }
+    }
+    return hidden;
+  }, [cells, sectionByStartCell]);
+
   useEffect(() => {
     if (!scrollToCellId || !containerRef.current) return;
     // Double-rAF: first frame lets React commit the DOM, second ensures layout
@@ -99,31 +124,6 @@ export function CellList() {
       setCellOutputs(cellId, result.outputs);
     }
   };
-
-  // Build a map of cell_id → section (for cells that start a section)
-  const sectionByStartCell = useMemo(() => {
-    const map = new Map<string, typeof sections[number]>();
-    for (const s of sections) {
-      map.set(s.starts_at, s);
-    }
-    return map;
-  }, [sections]);
-
-  // Build set of cell IDs hidden by collapsed sections
-  const hiddenCells = useMemo(() => {
-    const hidden = new Set<string>();
-    let collapsedSection: string | null = null;
-    for (const cell of cells) {
-      const section = sectionByStartCell.get(cell.id);
-      if (section) {
-        collapsedSection = section.collapsed ? section.id : null;
-      }
-      if (collapsedSection) {
-        hidden.add(cell.id);
-      }
-    }
-    return hidden;
-  }, [cells, sectionByStartCell]);
 
   return (
     <div ref={containerRef} className="space-y-0 p-4">

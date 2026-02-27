@@ -26,6 +26,21 @@ class PtyManager:
         self._running = False
         self._output_queue: asyncio.Queue[bytes] = asyncio.Queue()
 
+    @property
+    def running(self) -> bool:
+        return self._running
+
+    def get_foreground_pgid(self) -> int | None:
+        """Get the process group ID of the current foreground process."""
+        if self._master_fd is None or not self._running:
+            return None
+        try:
+            buf = struct.pack("i", 0)
+            result = fcntl.ioctl(self._master_fd, termios.TIOCGPGRP, buf)
+            return struct.unpack("i", result)[0]
+        except OSError:
+            return None
+
     async def start(
         self,
         command: str = "/bin/bash",

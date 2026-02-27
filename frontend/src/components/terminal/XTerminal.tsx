@@ -21,6 +21,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
   const setSessionConnected = useTerminalStore((s) => s.setSessionConnected);
+  const setSessionIsClaude = useTerminalStore((s) => s.setSessionIsClaude);
   const removeSession = useTerminalStore((s) => s.removeSession);
 
   useEffect(() => {
@@ -127,6 +128,10 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
               }
               return;
             }
+            if (msg.type === "foreground_process") {
+              setSessionIsClaude(sessionId, msg.isClaude);
+              return;
+            }
           } catch {
             // Not JSON — regular text output
           }
@@ -182,7 +187,7 @@ export function XTerminal({ sessionId, visible, initCommand, onSendReady }: XTer
       wsRef.current = null;
       fitAddonRef.current = null;
     };
-  }, [sessionId, setSessionConnected, removeSession]);
+  }, [sessionId, setSessionConnected, setSessionIsClaude, removeSession]);
 
   // Re-fit when becoming visible
   useEffect(() => {

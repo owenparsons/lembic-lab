@@ -6,6 +6,7 @@ export interface TerminalSession {
   label: string;
   connected: boolean;
   initCommand?: string;
+  isClaude?: boolean;
 }
 
 export interface NotebookSettings {
@@ -25,6 +26,7 @@ interface TerminalState {
   removeSession: (id: string) => void;
   setActiveSession: (id: string) => void;
   setSessionConnected: (id: string, connected: boolean) => void;
+  setSessionIsClaude: (id: string, isClaude: boolean) => void;
   setInjectionMessage: (message: string) => void;
   addAttachment: (attachment: TerminalAttachment) => void;
   removeAttachment: (cellId: string) => void;
@@ -88,6 +90,13 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
     set((state) => ({
       sessions: state.sessions.map((s) =>
         s.id === id ? { ...s, connected } : s,
+      ),
+    })),
+
+  setSessionIsClaude: (id, isClaude) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === id ? { ...s, isClaude } : s,
       ),
     })),
 

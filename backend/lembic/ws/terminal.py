@@ -14,6 +14,44 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def _get_process_args(pid: int) -> str | None:
+    """Get the full command line of a process by PID."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ps", "-p", str(pid), "-o", "args=",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        stdout, _ = await proc.communicate()
+        return stdout.decode().strip() if stdout else None
+    except OSError:
+        return None
+
+
+async def _poll_foreground(pty: PtyManager, websocket: WebSocket) -> None:
+    """Poll the foreground process and notify the frontend when it changes."""
+    last_pgid: int | None = None
+    last_is_claude: bool | None = None
+    while pty.running:
+        pgid = pty.get_foreground_pgid()
+        if pgid != last_pgid:
+            last_pgid = pgid
+            is_claude = False
+            if pgid is not None:
+                args = await _get_process_args(pgid)
+                is_claude = args is not None and "claude" in args.lower()
+            if is_claude != last_is_claude:
+                last_is_claude = is_claude
+                try:
+                    await websocket.send_text(json.dumps({
+                        "type": "foreground_process",
+                        "isClaude": is_claude,
+                    }))
+                except Exception:
+                    break
+        await asyncio.sleep(1)
+
+
 @router.websocket("/ws/terminal/{session_id}")
 async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
     await websocket.accept()
@@ -58,6 +96,7 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
             pass
 
     read_task = asyncio.create_task(read_pty())
+    poll_task = asyncio.create_task(_poll_foreground(pty, websocket))
 
     try:
         while True:
@@ -78,6 +117,7 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
         pass
     finally:
         read_task.cancel()
+        poll_task.cancel()
         logger.info("Terminal WebSocket disconnected (session=%s)", session_id)
 
 

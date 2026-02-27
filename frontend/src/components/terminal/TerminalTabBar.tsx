@@ -62,7 +62,7 @@ export function TerminalTabBar() {
                   : "bg-lb-bg-secondary text-lb-text-secondary hover:bg-lb-bg-tertiary"
               }`}
             >
-              {session.initCommand
+              {(session.isClaude ?? !!session.initCommand)
                 ? <Bot size={12} className="shrink-0 text-lb-text-secondary" />
                 : <Terminal size={12} className="shrink-0 text-lb-text-secondary" />}
               <span className="truncate">{session.label}</span>

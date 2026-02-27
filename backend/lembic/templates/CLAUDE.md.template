@@ -10,34 +10,46 @@ watching this directory for changes.
 - `outputs/` — Saved plots and tables
 - `execution_log.jsonl` — Execution history
 
-## IMPORTANT: Creating cells requires TWO steps
-A cell only appears in the notebook if it exists BOTH as a file AND
-in the manifest. Always do both:
+## Cell management
 
-1. Run `lembic gen-cell` to get an ID and name (e.g. `a1b2c3d4 lucky-aura`)
-2. Create the file: `cells/{id}_{name}.py`
-3. Add an entry to `notebook.yaml` under `cells:`:
-   ```yaml
-   - id: a1b2c3d4
-     name: lucky-aura
-     type: code
-     file: cells/a1b2c3d4_lucky-aura.py
-   ```
+Create a cell (file + manifest in one step):
+```
+lembic add-cell [--type code|markdown] [--name NAME] [--after CELL_ID] [--content "..."]
+```
 
-If you skip step 2, the file exists but the notebook cannot see it.
+Delete a cell:
+```
+lembic delete-cell CELL_ID
+```
+
+Move a cell:
+```
+lembic move-cell CELL_ID --after OTHER_ID
+lembic move-cell CELL_ID --to-start
+```
+
+## Running cells
+```
+lembic run-cell CELL_ID
+```
+Executes a cell headlessly. Prints stdout, return values, and errors.
+
+## Notebook status
+```
+lembic status
+```
+Shows all cells with execution state and warnings.
+
+## Kernel variables
+```
+lembic variables [--port 8000]
+```
+Shows current kernel variables (requires running server).
 
 ## Editing cells
 - Edit cell files directly; the notebook watches for changes and
   updates the UI automatically.
 - Cell order in the notebook matches the order in `notebook.yaml`.
-
-## Deleting cells
-- Remove the file from `cells/` AND remove its entry from
-  `notebook.yaml`.
-
-## Running cells
-- Run `lembic run-cell <id>` to execute a cell headlessly.
-- Or click the run button in the notebook UI.
 
 ## Git
 - Do NOT add `Co-Authored-By` lines to commit messages.

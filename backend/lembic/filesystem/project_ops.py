@@ -73,7 +73,11 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
                     "Write(/cells/**)",
                     "Edit(/lib/**)",
                     "Write(/lib/**)",
-                    "Bash(lembic gen-cell)",
+                    "Bash(lembic add-cell *)",
+                    "Bash(lembic delete-cell *)",
+                    "Bash(lembic move-cell *)",
+                    "Bash(lembic status)",
+                    "Bash(lembic variables)",
                     "Bash(lembic run-cell *)",
                 ]
             }

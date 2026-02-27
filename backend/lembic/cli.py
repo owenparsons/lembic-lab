@@ -1,5 +1,6 @@
-"""Lembic CLI: init, open, run-cell."""
+"""Lembic CLI: notebook management commands."""
 
+import re
 import subprocess
 import sys
 import webbrowser
@@ -84,6 +85,114 @@ def gen_cell() -> None:
     click.echo(f"{cell_id} {name}")
 
 
+# ---------------------------------------------------------------------------
+# Cell management commands
+# ---------------------------------------------------------------------------
+
+
+@cli.command("add-cell")
+@click.option("--type", "cell_type", default="code", type=click.Choice(["code", "markdown"]), help="Cell type")
+@click.option("--name", default=None, help="Cell name (auto-generated if omitted)")
+@click.option("--after", "after_id", default=None, help="Insert after this cell ID")
+@click.option("--content", default="", help="Initial cell content")
+def add_cell(cell_type: str, name: str | None, after_id: str | None, content: str) -> None:
+    """Create a cell: file + manifest entry in one step."""
+    from lembic.models.cells import CellType
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    ct = CellType.CODE if cell_type == "code" else CellType.MARKDOWN
+    entry = fm.create_cell(cell_type=ct, name=name, content=content, after_id=after_id)
+    click.echo(f"{entry.id} {entry.name} {entry.file}")
+
+
+@cli.command("delete-cell")
+@click.argument("cell_id")
+def delete_cell(cell_id: str) -> None:
+    """Delete a cell (file + manifest entry)."""
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    entry = fm.get_cell_entry(cell_id)
+    fm.delete_cell(cell_id)
+    click.echo(f"Deleted {entry.id} ({entry.name})")
+
+
+@cli.command("move-cell")
+@click.argument("cell_id")
+@click.option("--after", "after_id", default=None, help="Place after this cell ID")
+@click.option("--to-start", is_flag=True, help="Move to the beginning")
+def move_cell(cell_id: str, after_id: str | None, to_start: bool) -> None:
+    """Move a cell to a new position in the notebook."""
+    from lembic.services.file_manager import FileManager
+
+    if not after_id and not to_start:
+        click.echo("Error: specify --after CELL_ID or --to-start", err=True)
+        sys.exit(1)
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    target = None if to_start else after_id
+    fm.move_cell(cell_id, target)
+    entry = fm.get_cell_entry(cell_id)
+    click.echo(f"Moved {entry.id} ({entry.name})")
+
+
+# ---------------------------------------------------------------------------
+# Status command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("status")
+def status() -> None:
+    """Show notebook state: cells, execution states, and warnings."""
+    from lembic.services.execution_log import ExecutionLog
+    from lembic.services.file_manager import FileManager
+    from lembic.services.warning_engine import compute_warnings
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    manifest = fm.load_manifest()
+
+    if not manifest.cells:
+        click.echo(f"Notebook: {manifest.name or project_dir.name}")
+        click.echo("Cells: 0")
+        return
+
+    log = ExecutionLog(project_dir / "execution_log.jsonl")
+    events = log.read_all()
+    states, warnings = compute_warnings(manifest, events, fm)
+
+    click.echo(f"Notebook: {manifest.name or project_dir.name}")
+    click.echo(f"Cells: {len(manifest.cells)}")
+    click.echo()
+
+    for i, cell in enumerate(manifest.cells, 1):
+        state = states.get(cell.id, "idle")
+        if hasattr(state, "value"):
+            state = state.value
+        type_label = cell.cell_type.value
+        click.echo(f"  {i}. [{cell.id}] {cell.name:<20s} ({type_label:<10s}) [{state}]")
+
+    if warnings:
+        click.echo()
+        click.echo("Warnings:")
+        for w in warnings:
+            click.echo(f"  ! {w}")
+
+
+# ---------------------------------------------------------------------------
+# Run cell (with full output capture)
+# ---------------------------------------------------------------------------
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape codes from text."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
 @cli.command("run-cell")
 @click.argument("cell_id")
 def run_cell(cell_id: str) -> None:
@@ -111,8 +220,57 @@ def run_cell(cell_id: str) -> None:
         else:
             click.echo(f"OK ({result.duration_ms:.0f}ms)")
             for output in result.outputs:
-                if output.get("type") == "stream":
+                msg_type = output.get("type")
+                if msg_type == "stream":
                     click.echo(output.get("text", ""), nl=False)
+                elif msg_type in ("execute_result", "display_data"):
+                    data = output.get("data", {})
+                    text = data.get("text/plain", "")
+                    if text:
+                        click.echo(text)
+                elif msg_type == "error":
+                    tb_lines = output.get("traceback", [])
+                    for line in tb_lines:
+                        click.echo(_strip_ansi(line), err=True)
         await km.shutdown()
 
     asyncio.run(_run())
+
+
+# ---------------------------------------------------------------------------
+# Variables command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("variables")
+@click.option("--port", default=8000, help="Server port")
+def variables(port: int) -> None:
+    """Show kernel variables (requires running server)."""
+    import json
+    import urllib.request
+
+    url = f"http://localhost:{port}/api/variables"
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+    except Exception as exc:
+        click.echo(f"Error: could not reach server at port {port} ({exc})", err=True)
+        sys.exit(1)
+
+    if not data:
+        click.echo("No variables in kernel.")
+        return
+
+    # Compute column widths
+    name_w = max(len(v["name"]) for v in data)
+    type_w = max(len(v["var_type"]) for v in data)
+    name_w = max(name_w, 4)
+    type_w = max(type_w, 4)
+
+    click.echo(f"{'Name':<{name_w}}  {'Type':<{type_w}}  Preview")
+    click.echo(f"{'-' * name_w}  {'-' * type_w}  {'-' * 40}")
+    for v in data:
+        preview = v.get("preview", "")
+        if len(preview) > 60:
+            preview = preview[:57] + "..."
+        click.echo(f"{v['name']:<{name_w}}  {v['var_type']:<{type_w}}  {preview}")

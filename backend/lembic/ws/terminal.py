@@ -30,25 +30,22 @@ async def _get_process_args(pid: int) -> str | None:
 
 async def _poll_foreground(pty: PtyManager, websocket: WebSocket) -> None:
     """Poll the foreground process and notify the frontend when it changes."""
-    last_pgid: int | None = None
     last_is_claude: bool | None = None
     while pty.running:
         pgid = pty.get_foreground_pgid()
-        if pgid != last_pgid:
-            last_pgid = pgid
-            is_claude = False
-            if pgid is not None:
-                args = await _get_process_args(pgid)
-                is_claude = args is not None and "claude" in args.lower()
-            if is_claude != last_is_claude:
-                last_is_claude = is_claude
-                try:
-                    await websocket.send_text(json.dumps({
-                        "type": "foreground_process",
-                        "isClaude": is_claude,
-                    }))
-                except Exception:
-                    break
+        is_claude = False
+        if pgid is not None:
+            args = await _get_process_args(pgid)
+            is_claude = args is not None and "claude" in args.lower()
+        if is_claude != last_is_claude:
+            last_is_claude = is_claude
+            try:
+                await websocket.send_text(json.dumps({
+                    "type": "foreground_process",
+                    "isClaude": is_claude,
+                }))
+            except Exception:
+                break
         await asyncio.sleep(1)
 
 

@@ -3,7 +3,11 @@
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, BeforeValidator, Field
+
+StrCoerce = Annotated[str, BeforeValidator(lambda v: str(v))]
 
 
 class CellType(str, Enum):
@@ -31,7 +35,7 @@ class CellAnnotation(BaseModel):
 class CellEntry(BaseModel):
     """A cell entry in the notebook manifest."""
 
-    id: str
+    id: StrCoerce
     name: str
     cell_type: CellType = Field(alias="type")
     file: str

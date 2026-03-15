@@ -79,6 +79,7 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
                     "Bash(lembic status)",
                     "Bash(lembic variables)",
                     "Bash(lembic run-cell *)",
+                    "Bash(lembic annotate *)",
                 ]
             }
         }

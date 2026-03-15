@@ -34,6 +34,25 @@ lembic run-cell CELL_ID
 ```
 Executes a cell headlessly. Prints stdout, return values, and errors.
 
+## Cell annotations
+
+Leave visible notes on cells that appear as coloured banners in the UI.
+Use annotations to communicate with the user — they persist in the
+notebook and are visible even when the terminal is not in focus.
+
+```
+lembic annotate CELL_ID 'Annotation text' --style info|warning|success|error
+lembic annotate CELL_ID --clear
+```
+
+When to annotate:
+- After fixing a cell: explain what changed (`--style success`)
+- Flagging a problem you cannot resolve: stale dependencies, missing
+  data, ambiguous logic (`--style warning`)
+- Execution errors with context: summarise the error and suggest a fix
+  (`--style error`)
+- General observations: performance notes, review comments (`--style info`)
+
 ## Notebook status
 ```
 lembic status
@@ -45,6 +64,13 @@ Shows all cells with execution state and warnings.
 lembic variables [--port 8000]
 ```
 Shows current kernel variables (requires running server).
+
+## Cell identifiers
+
+CELL_ID in all commands above accepts any of:
+- Full 8-char hex ID (e.g. `b739a1c2`)
+- Short 4-char prefix shown in the UI (e.g. `b739`)
+- Cell name (e.g. `odd-numbers`)
 
 ## Editing cells
 - Edit cell files directly; the notebook watches for changes and

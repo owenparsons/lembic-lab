@@ -69,12 +69,23 @@ async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
         if state.file_manager:
             shell = state.file_manager.load_manifest().settings.shell
 
+        # Disable history expansion so ! in double quotes works normally.
+        # Both bash and zsh treat ! as special in interactive mode by default.
+        if "zsh" in shell:
+            bang_off = ["-o", "NO_BANG_HIST"]
+        elif "bash" in shell:
+            bang_off = ["+H"]
+        else:
+            bang_off = []
+
         # When an init_command is provided, start it directly via shell -c
         # so there's no shell echo of the command.  After it exits, exec
         # replaces the process with an interactive shell for the user.
-        args = None
         if init_command:
-            args = [shell, "-c", f"{init_command}; exec {shell} -i"]
+            interactive = " ".join([shell] + bang_off + ["-i"])
+            args = [shell, "-c", f"{init_command}; exec {interactive}"]
+        else:
+            args = [shell] + bang_off if bang_off else None
 
         await pty.start(
             command=shell, cwd=str(state.project_dir), args=args, env=env,

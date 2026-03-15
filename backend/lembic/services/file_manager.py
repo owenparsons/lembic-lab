@@ -68,11 +68,33 @@ class FileManager:
         self._manifest = None
 
     def get_cell_entry(self, cell_id: str) -> CellEntry:
-        """Get a cell entry by ID."""
+        """Get a cell entry by full ID, 4-char prefix, or name.
+
+        Resolution order: exact ID match, then prefix match, then name match.
+        Raises CellNotFoundError if no match, or if the match is ambiguous.
+        """
         manifest = self.load_manifest()
+
+        # 1. Exact ID match
         for entry in manifest.cells:
             if entry.id == cell_id:
                 return entry
+
+        # 2. Prefix match (4-char short ID from the UI)
+        prefix_matches = [e for e in manifest.cells if e.id.startswith(cell_id)]
+        if len(prefix_matches) == 1:
+            return prefix_matches[0]
+        if len(prefix_matches) > 1:
+            names = ", ".join(f"{e.id} ({e.name})" for e in prefix_matches)
+            raise CellNotFoundError(
+                f"Ambiguous prefix '{cell_id}' matches multiple cells: {names}"
+            )
+
+        # 3. Name match
+        name_matches = [e for e in manifest.cells if e.name == cell_id]
+        if len(name_matches) == 1:
+            return name_matches[0]
+
         raise CellNotFoundError(cell_id)
 
     def _cell_path(self, entry: CellEntry) -> Path:
@@ -99,6 +121,25 @@ class FileManager:
         content = self.read_cell(cell_id)
         return hashlib.sha256(content.encode()).hexdigest()
 
+    def _generate_unique_id(self, existing_ids: set[str]) -> str:
+        """Generate an 8-char hex ID whose 4-char prefix is unique."""
+        existing_prefixes = {eid[:4] for eid in existing_ids}
+        for _ in range(100):
+            new_id = uuid.uuid4().hex[:8]
+            if new_id[:4] not in existing_prefixes:
+                return new_id
+        raise RuntimeError("Could not generate ID with unique 4-char prefix")
+
+    def _generate_unique_cell_id(self) -> str:
+        """Generate an 8-char hex ID whose 4-char prefix is unique among existing cells."""
+        manifest = self.load_manifest()
+        return self._generate_unique_id({e.id for e in manifest.cells})
+
+    def _generate_unique_section_id(self) -> str:
+        """Generate an 8-char hex ID whose 4-char prefix is unique among existing sections."""
+        manifest = self.load_manifest()
+        return self._generate_unique_id({s.id for s in manifest.sections})
+
     def create_cell(
         self,
         cell_type: CellType = CellType.CODE,
@@ -110,7 +151,7 @@ class FileManager:
         manifest = self.load_manifest()
         existing_names = {e.name for e in manifest.cells}
 
-        cell_id = uuid.uuid4().hex[:8]
+        cell_id = self._generate_unique_cell_id()
         if name is None:
             name = generate_name(existing_names)
 

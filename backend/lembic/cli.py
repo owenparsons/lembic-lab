@@ -76,11 +76,12 @@ def gen_cell() -> None:
     manifest = project_dir / "notebook.yaml"
     if manifest.exists():
         fm = FileManager(project_dir)
+        cell_id = fm._generate_unique_cell_id()
         existing = {c.name for c in fm.load_manifest().cells}
     else:
+        cell_id = uuid.uuid4().hex[:8]
         existing = set()
 
-    cell_id = uuid.uuid4().hex[:8]
     name = generate_name(existing)
     click.echo(f"{cell_id} {name}")
 
@@ -407,8 +408,6 @@ def annotate(cell_id: str, text: str | None, style: str, clear: bool) -> None:
 @click.option("--before", "before_cell_id", required=True, help="Cell ID where section starts")
 def add_section(name: str, before_cell_id: str) -> None:
     """Add a section divider before a cell."""
-    import uuid
-
     from lembic.models.notebook import NotebookSection
     from lembic.services.file_manager import FileManager
 
@@ -419,7 +418,7 @@ def add_section(name: str, before_cell_id: str) -> None:
     manifest = fm.load_manifest()
 
     section = NotebookSection(
-        id=uuid.uuid4().hex[:8],
+        id=fm._generate_unique_section_id(),
         name=name,
         starts_at=before_cell_id,
     )

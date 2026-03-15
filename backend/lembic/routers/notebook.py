@@ -1,7 +1,5 @@
 """Notebook manifest endpoints."""
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -100,7 +98,7 @@ async def create_section(
 ) -> NotebookSection:
     manifest = fm.load_manifest()
     section = NotebookSection(
-        id=uuid.uuid4().hex[:8],
+        id=fm._generate_unique_section_id(),
         name=request.name,
         starts_at=request.starts_at,
     )

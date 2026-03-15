@@ -413,18 +413,18 @@ def add_section(name: str, before_cell_id: str) -> None:
 
     project_dir = Path.cwd()
     fm = FileManager(project_dir)
-    # Validate cell exists
-    fm.get_cell_entry(before_cell_id)
+    # Resolve to full cell ID (supports 4-char prefix and name)
+    entry = fm.get_cell_entry(before_cell_id)
     manifest = fm.load_manifest()
 
     section = NotebookSection(
         id=fm._generate_unique_section_id(),
         name=name,
-        starts_at=before_cell_id,
+        starts_at=entry.id,
     )
     manifest.sections.append(section)
     fm.save_manifest()
-    click.echo(f"Added section '{name}' (id={section.id}) before {before_cell_id}")
+    click.echo(f"Added section '{name}' (id={section.id}) before {entry.id}")
 
 
 @cli.command("delete-section")

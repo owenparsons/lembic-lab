@@ -26,6 +26,7 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
             "name": name,
             "settings": {
                 "close_terminal_on_exit": True,
+                "shell": "/bin/zsh",
             },
             "cells": [],
         }

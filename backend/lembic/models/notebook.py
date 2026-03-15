@@ -9,6 +9,7 @@ class NotebookSettings(BaseModel):
     """Per-notebook settings stored in notebook.yaml."""
 
     close_terminal_on_exit: bool = True
+    shell: str = "/bin/zsh"
 
 
 class NotebookSection(BaseModel):

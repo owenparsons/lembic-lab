@@ -43,7 +43,7 @@ class PtyManager:
 
     async def start(
         self,
-        command: str = "/bin/bash",
+        command: str = "/bin/zsh",
         args: list[str] | None = None,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
@@ -82,7 +82,8 @@ class PtyManager:
             child_env = env if env is not None else os.environ.copy()
             child_env["TERM"] = "xterm-256color"
             child_env["COLORTERM"] = "truecolor"
-            child_env["BASH_SILENCE_DEPRECATION_WARNING"] = "1"
+            if "bash" in command:
+                child_env["BASH_SILENCE_DEPRECATION_WARNING"] = "1"
 
             cmd_args = args if args is not None else [command]
             os.execvpe(command, cmd_args, child_env)

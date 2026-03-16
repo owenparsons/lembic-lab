@@ -4,9 +4,26 @@ import re
 import subprocess
 import sys
 import webbrowser
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import click
+
+
+class OverlapAction(Enum):
+    TRIM_END = "trim_end"
+    REMOVE = "remove"
+    TRIM_START = "trim_start"
+
+
+@dataclass
+class OverlapAdjustment:
+    section_id: str
+    section_name: str
+    action: OverlapAction
+    new_boundary: str | None = None  # new cell_id for the trimmed boundary
+    description: str = ""            # human-readable explanation
 
 
 @click.group()
@@ -411,12 +428,17 @@ def _cell_index(manifest, cell_id: str) -> int:
     return -1
 
 
-def _validate_no_overlap(manifest, target_section_id: str | None, start_idx: int, end_idx: int) -> None:
-    """Check that [start_idx, end_idx] doesn't overlap any other section's range.
+def _detect_overlaps(
+    manifest, target_section_id: str | None, start_idx: int, end_idx: int
+) -> list[OverlapAdjustment]:
+    """Detect overlaps between [start_idx, end_idx] and existing sections.
 
-    Raises click.ClickException on overlap.
+    Returns a list of adjustments needed to resolve overlaps.
+    The new section always takes priority.
     """
     cell_ids = [c.id for c in manifest.cells]
+    cells = manifest.cells
+    adjustments: list[OverlapAdjustment] = []
 
     for s in manifest.sections:
         if s.id == target_section_id:
@@ -438,22 +460,109 @@ def _validate_no_overlap(manifest, target_section_id: str | None, start_idx: int
             s_end = (next_starts[0] - 1) if next_starts else len(cell_ids) - 1
 
         # Check overlap: two ranges [a,b] and [c,d] overlap iff a <= d and c <= b
-        if start_idx <= s_end and s_start <= end_idx:
-            raise click.ClickException(
-                f"Range overlaps section '{s.name}' "
-                f"(cells {cell_ids[s_start][:8]}..{cell_ids[s_end][:8]})"
-            )
+        if not (start_idx <= s_end and s_start <= end_idx):
+            continue
+
+        # Classify the overlap
+        if s_start >= start_idx and s_end <= end_idx:
+            # Existing entirely within new → remove
+            adjustments.append(OverlapAdjustment(
+                section_id=s.id,
+                section_name=s.name,
+                action=OverlapAction.REMOVE,
+                description=f"Remove section '{s.name}' (entirely within new section)",
+            ))
+        elif s_start < start_idx:
+            # Existing starts before new → trim its end
+            new_end = cells[start_idx - 1].id
+            new_end_name = cells[start_idx - 1].name
+            adjustments.append(OverlapAdjustment(
+                section_id=s.id,
+                section_name=s.name,
+                action=OverlapAction.TRIM_END,
+                new_boundary=new_end,
+                description=(
+                    f"Trim section '{s.name}' end → "
+                    f"cell {new_end[:8]} ({new_end_name})"
+                ),
+            ))
+        elif s_end > end_idx:
+            # Existing starts within new but extends beyond → trim its start
+            new_start = cells[end_idx + 1].id
+            new_start_name = cells[end_idx + 1].name
+            adjustments.append(OverlapAdjustment(
+                section_id=s.id,
+                section_name=s.name,
+                action=OverlapAction.TRIM_START,
+                new_boundary=new_start,
+                description=(
+                    f"Trim section '{s.name}' start → "
+                    f"cell {new_start[:8]} ({new_start_name})"
+                ),
+            ))
+
+    return adjustments
+
+
+def _format_overlap_prompt(adjustments: list[OverlapAdjustment]) -> str:
+    """Format overlap adjustments into a human-readable message."""
+    lines = ["Creating this section requires adjustments:"]
+    for i, adj in enumerate(adjustments, 1):
+        lines.append(f"  {i}. {adj.description}")
+    return "\n".join(lines)
+
+
+def _apply_overlap_adjustments(manifest, adjustments: list[OverlapAdjustment]) -> None:
+    """Apply overlap adjustments to the manifest in place."""
+    remove_ids: set[str] = set()
+    for adj in adjustments:
+        if adj.action == OverlapAction.TRIM_END:
+            for s in manifest.sections:
+                if s.id == adj.section_id:
+                    s.ends_at = adj.new_boundary
+                    break
+        elif adj.action == OverlapAction.TRIM_START:
+            for s in manifest.sections:
+                if s.id == adj.section_id:
+                    s.starts_at = adj.new_boundary
+                    break
+        elif adj.action == OverlapAction.REMOVE:
+            remove_ids.add(adj.section_id)
+
+    if remove_ids:
+        manifest.sections = [s for s in manifest.sections if s.id not in remove_ids]
+
+
+def _confirm_overlaps(
+    adjustments: list[OverlapAdjustment], auto_confirm: bool
+) -> bool:
+    """Show overlap adjustments and return True if user confirms."""
+    msg = _format_overlap_prompt(adjustments)
+    click.echo(msg)
+    if auto_confirm:
+        click.echo("Auto-confirmed (--yes).")
+        return True
+    return click.confirm("Proceed?")
 
 
 @cli.command("add-section")
 @click.argument("name")
 @click.option("--before", "before_cell_id", default=None, help="Cell ID where section starts")
 @click.option("--ends-at", "ends_at_cell_id", default=None, help="Cell ID where section ends (inclusive)")
-def add_section(name: str, before_cell_id: str | None, ends_at_cell_id: str | None) -> None:
+@click.option("--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm overlap adjustments")
+def add_section(
+    name: str,
+    before_cell_id: str | None,
+    ends_at_cell_id: str | None,
+    auto_confirm: bool,
+) -> None:
     """Add or update a section divider.
 
     With --before: create a new section starting at that cell.
     With --ends-at only: update an existing section's end boundary.
+
+    If the new section overlaps existing sections, you'll be prompted to
+    confirm adjustments. Use --yes to auto-confirm.
     """
     from lembic.models.notebook import NotebookSection
     from lembic.services.file_manager import FileManager
@@ -490,7 +599,11 @@ def add_section(name: str, before_cell_id: str | None, ends_at_cell_id: str | No
             )
             end_idx = (next_starts[0] - 1) if next_starts else len(manifest.cells) - 1
 
-        _validate_no_overlap(manifest, None, start_idx, end_idx)
+        adjustments = _detect_overlaps(manifest, None, start_idx, end_idx)
+        if adjustments:
+            if not _confirm_overlaps(adjustments, auto_confirm):
+                sys.exit(0)
+            _apply_overlap_adjustments(manifest, adjustments)
 
         section = NotebookSection(
             id=fm._generate_unique_section_id(),
@@ -533,7 +646,11 @@ def add_section(name: str, before_cell_id: str | None, ends_at_cell_id: str | No
             click.echo("Error: --ends-at cell must be at or after section start.", err=True)
             sys.exit(1)
 
-        _validate_no_overlap(manifest, target.id, start_idx, end_idx)
+        adjustments = _detect_overlaps(manifest, target.id, start_idx, end_idx)
+        if adjustments:
+            if not _confirm_overlaps(adjustments, auto_confirm):
+                sys.exit(0)
+            _apply_overlap_adjustments(manifest, adjustments)
 
         target.ends_at = ends_at_full_id
         fm.save_manifest()

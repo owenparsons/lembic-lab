@@ -35,7 +35,8 @@ def cli() -> None:
 @cli.command()
 @click.argument("name")
 @click.option("--path", default=None, help="Parent directory (defaults to projects/)")
-def init(name: str, path: str | None) -> None:
+@click.option("--no-git", is_flag=True, help="Skip git initialization (disables auto-checkpoints)")
+def init(name: str, path: str | None, no_git: bool) -> None:
     """Initialize a new Lembic project."""
     from lembic.filesystem.project_ops import initialize_project
 
@@ -46,7 +47,7 @@ def init(name: str, path: str | None) -> None:
 
     parent.mkdir(parents=True, exist_ok=True)
     project_dir = parent / name
-    initialize_project(project_dir, name)
+    initialize_project(project_dir, name, init_git=not no_git)
     click.echo(f"Created Lembic project: {project_dir}")
     click.echo(f"  ./scripts/dev.sh {project_dir}")
 

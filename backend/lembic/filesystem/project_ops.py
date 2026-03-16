@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 
-def initialize_project(project_dir: Path, name: str | None = None) -> None:
+def initialize_project(project_dir: Path, name: str | None = None, *, init_git: bool = True) -> None:
     """Create a new Lembic project with full directory structure."""
     project_dir.mkdir(parents=True, exist_ok=True)
 
@@ -88,11 +88,12 @@ def initialize_project(project_dir: Path, name: str | None = None) -> None:
         claude_settings.write_text(json.dumps(settings, indent=2) + "\n")
 
     # Initialize git repo for auto-checkpoints
-    git_dir = project_dir / ".git"
-    if not git_dir.exists():
-        subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
-        subprocess.run(["git", "add", "-A"], cwd=project_dir, capture_output=True)
-        subprocess.run(
-            ["git", "commit", "-m", "lembic: auto-checkpoint init"],
-            cwd=project_dir, capture_output=True,
-        )
+    if init_git:
+        git_dir = project_dir / ".git"
+        if not git_dir.exists():
+            subprocess.run(["git", "init"], cwd=project_dir, capture_output=True)
+            subprocess.run(["git", "add", "-A"], cwd=project_dir, capture_output=True)
+            subprocess.run(
+                ["git", "commit", "-m", "lembic: auto-checkpoint init"],
+                cwd=project_dir, capture_output=True,
+            )

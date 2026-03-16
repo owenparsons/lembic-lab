@@ -191,9 +191,25 @@ def status() -> None:
 
     click.echo(f"Notebook: {manifest.name or project_dir.name}")
     click.echo(f"Cells: {len(manifest.cells)}")
+    if manifest.sections:
+        click.echo(f"Sections: {len(manifest.sections)}")
     click.echo()
 
+    # Build a map of cell_id → section that starts at that cell
+    section_starts: dict[str, list] = {}
+    for s in manifest.sections:
+        section_starts.setdefault(s.starts_at, []).append(s)
+
     for i, cell in enumerate(manifest.cells, 1):
+        # Print section header(s) before the cell they start at
+        for s in section_starts.get(cell.id, []):
+            ends_label = ""
+            if s.ends_at:
+                ends_label = f" → {s.ends_at[:8]}"
+            else:
+                ends_label = " → ..."
+            click.echo(f"  ── {s.name} [{s.id}]{ends_label} ──")
+
         state = states.get(cell.id, "idle")
         if hasattr(state, "value"):
             state = state.value

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from lembic.errors import CellNotFoundError, ManifestError, SectionNotFoundError
+from lembic.errors import CellNotFoundError, DuplicateNameError, ManifestError, SectionNotFoundError
 from lembic.models.cells import CellEntry, CellType
 from lembic.models.notebook import NotebookManifest, NotebookSection
 from lembic.services.name_generator import generate_name
@@ -184,6 +184,8 @@ class FileManager:
         cell_id = self._generate_unique_cell_id()
         if name is None:
             name = generate_name(existing_names)
+        elif name in existing_names:
+            raise DuplicateNameError("cell", name)
 
         ext = ".md" if cell_type == CellType.MARKDOWN else ".py"
         filename = f"cells/{cell_id}_{name}{ext}"
@@ -223,6 +225,9 @@ class FileManager:
         """Rename a cell (updates manifest and renames file)."""
         manifest = self.load_manifest()
         entry = self.get_cell_entry(cell_id)
+        existing_names = {e.name for e in manifest.cells if e.id != entry.id}
+        if new_name in existing_names:
+            raise DuplicateNameError("cell", new_name)
         old_path = self._cell_path(entry)
 
         ext = ".md" if entry.cell_type == CellType.MARKDOWN else ".py"

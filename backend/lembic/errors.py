@@ -21,6 +21,15 @@ class SectionNotFoundError(LembicError):
         super().__init__(f"Section not found: {section_ref}")
 
 
+class DuplicateNameError(LembicError):
+    """Raised when a cell or section name already exists."""
+
+    def __init__(self, kind: str, name: str) -> None:
+        self.kind = kind
+        self.name = name
+        super().__init__(f"A {kind} named '{name}' already exists")
+
+
 class CellFileError(LembicError):
     """Raised when a cell's source file cannot be read or written."""
 

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from lembic.errors import SectionNotFoundError
+from lembic.errors import DuplicateNameError, SectionNotFoundError
 from lembic.models.cells import CellResponse, CellState
 from lembic.models.notebook import NotebookResponse, NotebookSection, NotebookSettings, ReorderRequest
 from lembic.server.dependencies import get_file_manager, get_state
@@ -99,6 +99,8 @@ async def create_section(
     fm: FileManager = Depends(get_file_manager),
 ) -> NotebookSection:
     manifest = fm.load_manifest()
+    if any(s.name == request.name for s in manifest.sections):
+        raise HTTPException(status_code=409, detail=f"A section named '{request.name}' already exists")
     section = NotebookSection(
         id=fm._generate_unique_section_id(),
         name=request.name,
@@ -136,6 +138,9 @@ async def update_section(
     except SectionNotFoundError:
         raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")
     if "name" in updates:
+        manifest = fm.load_manifest()
+        if any(s.name == updates["name"] and s.id != section.id for s in manifest.sections):
+            raise HTTPException(status_code=409, detail=f"A section named '{updates['name']}' already exists")
         section.name = updates["name"]
     if "collapsed" in updates:
         section.collapsed = updates["collapsed"]

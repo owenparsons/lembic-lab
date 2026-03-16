@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from lembic.errors import CellNotFoundError
+from lembic.errors import CellNotFoundError, DuplicateNameError
 from lembic.models.cells import (
     CellCreate,
     CellMoveRequest,
@@ -51,12 +51,15 @@ async def create_cell(
     request: CellCreate,
     fm: FileManager = Depends(get_file_manager),
 ) -> CellResponse:
-    entry = fm.create_cell(
-        cell_type=request.cell_type,
-        name=request.name,
-        content=request.content,
-        after_id=request.after_id,
-    )
+    try:
+        entry = fm.create_cell(
+            cell_type=request.cell_type,
+            name=request.name,
+            content=request.content,
+            after_id=request.after_id,
+        )
+    except DuplicateNameError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     return CellResponse(
         id=entry.id,
         name=entry.name,
@@ -105,7 +108,10 @@ async def update_cell(
         raise HTTPException(status_code=404, detail=f"Cell not found: {cell_id}")
 
     if request.name is not None:
-        fm.rename_cell(cell_id, request.name)
+        try:
+            fm.rename_cell(cell_id, request.name)
+        except DuplicateNameError as e:
+            raise HTTPException(status_code=409, detail=str(e))
         entry = fm.get_cell_entry(cell_id)
 
     if request.content is not None:

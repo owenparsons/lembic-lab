@@ -582,6 +582,11 @@ def add_section(
 
     if before_cell_id:
         # --- Create new section ---
+        existing_section_names = {s.name for s in manifest.sections}
+        if name in existing_section_names:
+            click.echo(f"Error: a section named '{name}' already exists.", err=True)
+            sys.exit(1)
+
         entry = fm.get_cell_entry(before_cell_id)
         start_idx = _cell_index(manifest, entry.id)
 

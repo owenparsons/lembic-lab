@@ -679,3 +679,30 @@ def delete_section(section_id: str) -> None:
     manifest.sections = [s for s in manifest.sections if s.id != section.id]
     fm.save_manifest()
     click.echo(f"Deleted section {section.id} ({section.name})")
+
+
+@cli.command("clear-sections")
+@click.option("--yes", "-y", "auto_confirm", is_flag=True, help="Skip confirmation prompt")
+def clear_sections(auto_confirm: bool) -> None:
+    """Remove all section dividers."""
+    from lembic.services.file_manager import FileManager
+
+    project_dir = Path.cwd()
+    fm = FileManager(project_dir)
+    manifest = fm.load_manifest()
+
+    count = len(manifest.sections)
+    if count == 0:
+        click.echo("No sections to remove.")
+        return
+
+    if not auto_confirm:
+        click.echo(f"This will remove all {count} section(s):")
+        for s in manifest.sections:
+            click.echo(f"  - {s.name} ({s.id})")
+        if not click.confirm("Proceed?"):
+            return
+
+    manifest.sections = []
+    fm.save_manifest()
+    click.echo(f"Removed {count} section(s).")

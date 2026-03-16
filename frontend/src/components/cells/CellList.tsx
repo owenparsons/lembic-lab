@@ -38,6 +38,17 @@ export function CellList() {
     return map;
   }, [sections]);
 
+  // Build a map of ends_at cell_id → section id (for bounded sections)
+  const endsAtCell = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sections) {
+      if (s.ends_at) {
+        map.set(s.ends_at, s.id);
+      }
+    }
+    return map;
+  }, [sections]);
+
   // Build set of cell IDs hidden by collapsed sections
   const hiddenCells = useMemo(() => {
     const hidden = new Set<string>();
@@ -50,9 +61,13 @@ export function CellList() {
       if (collapsedSection) {
         hidden.add(cell.id);
       }
+      // If this cell is the ends_at of the current collapsed section, stop hiding
+      if (collapsedSection && endsAtCell.get(cell.id) === collapsedSection) {
+        collapsedSection = null;
+      }
     }
     return hidden;
-  }, [cells, sectionByStartCell]);
+  }, [cells, sectionByStartCell, endsAtCell]);
 
   useEffect(() => {
     if (!scrollToCellId || !containerRef.current) return;

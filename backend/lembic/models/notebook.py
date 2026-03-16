@@ -18,6 +18,7 @@ class NotebookSection(BaseModel):
     id: str
     name: str
     starts_at: str  # cell_id where section begins
+    ends_at: str | None = None  # cell_id where section ends (inclusive), None = open-ended
     collapsed: bool = False
 
 

@@ -60,7 +60,7 @@ class FileManager:
         data["settings"] = manifest.settings.model_dump()
         data["cells"] = cells
         if manifest.sections:
-            data["sections"] = [s.model_dump() for s in manifest.sections]
+            data["sections"] = [s.model_dump(exclude_none=True) for s in manifest.sections]
         self.manifest_path.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
 
     def invalidate_manifest(self) -> None:

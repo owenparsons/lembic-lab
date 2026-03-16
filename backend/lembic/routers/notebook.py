@@ -83,6 +83,7 @@ async def update_settings(
 class SectionCreate(BaseModel):
     name: str
     starts_at: str  # cell_id
+    ends_at: str | None = None
 
 
 @router.get("/sections", response_model=list[NotebookSection])
@@ -101,6 +102,7 @@ async def create_section(
         id=fm._generate_unique_section_id(),
         name=request.name,
         starts_at=request.starts_at,
+        ends_at=request.ends_at,
     )
     manifest.sections.append(section)
     fm.save_manifest()
@@ -136,6 +138,8 @@ async def update_section(
                 section.collapsed = updates["collapsed"]
             if "starts_at" in updates:
                 section.starts_at = updates["starts_at"]
+            if "ends_at" in updates:
+                section.ends_at = updates["ends_at"]  # str or None to clear
             fm.save_manifest()
             return section
     raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")

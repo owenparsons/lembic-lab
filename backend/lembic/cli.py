@@ -403,28 +403,141 @@ def annotate(cell_id: str, text: str | None, style: str, clear: bool) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _cell_index(manifest, cell_id: str) -> int:
+    """Return the index of a cell in the manifest's cell list."""
+    for i, c in enumerate(manifest.cells):
+        if c.id == cell_id:
+            return i
+    return -1
+
+
+def _validate_no_overlap(manifest, target_section_id: str | None, start_idx: int, end_idx: int) -> None:
+    """Check that [start_idx, end_idx] doesn't overlap any other section's range.
+
+    Raises click.ClickException on overlap.
+    """
+    cell_ids = [c.id for c in manifest.cells]
+
+    for s in manifest.sections:
+        if s.id == target_section_id:
+            continue
+        s_start = _cell_index(manifest, s.starts_at)
+        if s_start == -1:
+            continue
+        if s.ends_at:
+            s_end = _cell_index(manifest, s.ends_at)
+            if s_end == -1:
+                continue
+        else:
+            # Open-ended: find next section's start or end of notebook
+            next_starts = sorted(
+                _cell_index(manifest, other.starts_at)
+                for other in manifest.sections
+                if other.id != s.id and _cell_index(manifest, other.starts_at) > s_start
+            )
+            s_end = (next_starts[0] - 1) if next_starts else len(cell_ids) - 1
+
+        # Check overlap: two ranges [a,b] and [c,d] overlap iff a <= d and c <= b
+        if start_idx <= s_end and s_start <= end_idx:
+            raise click.ClickException(
+                f"Range overlaps section '{s.name}' "
+                f"(cells {cell_ids[s_start][:8]}..{cell_ids[s_end][:8]})"
+            )
+
+
 @cli.command("add-section")
 @click.argument("name")
-@click.option("--before", "before_cell_id", required=True, help="Cell ID where section starts")
-def add_section(name: str, before_cell_id: str) -> None:
-    """Add a section divider before a cell."""
+@click.option("--before", "before_cell_id", default=None, help="Cell ID where section starts")
+@click.option("--ends-at", "ends_at_cell_id", default=None, help="Cell ID where section ends (inclusive)")
+def add_section(name: str, before_cell_id: str | None, ends_at_cell_id: str | None) -> None:
+    """Add or update a section divider.
+
+    With --before: create a new section starting at that cell.
+    With --ends-at only: update an existing section's end boundary.
+    """
     from lembic.models.notebook import NotebookSection
     from lembic.services.file_manager import FileManager
 
     project_dir = Path.cwd()
     fm = FileManager(project_dir)
-    # Resolve to full cell ID (supports 4-char prefix and name)
-    entry = fm.get_cell_entry(before_cell_id)
     manifest = fm.load_manifest()
 
-    section = NotebookSection(
-        id=fm._generate_unique_section_id(),
-        name=name,
-        starts_at=entry.id,
-    )
-    manifest.sections.append(section)
-    fm.save_manifest()
-    click.echo(f"Added section '{name}' (id={section.id}) before {entry.id}")
+    if not before_cell_id and not ends_at_cell_id:
+        click.echo("Error: provide --before, --ends-at, or both.", err=True)
+        sys.exit(1)
+
+    # Resolve ends_at cell ID if provided
+    ends_at_full_id: str | None = None
+    if ends_at_cell_id:
+        ends_at_full_id = fm.get_cell_entry(ends_at_cell_id).id
+
+    if before_cell_id:
+        # --- Create new section ---
+        entry = fm.get_cell_entry(before_cell_id)
+        start_idx = _cell_index(manifest, entry.id)
+
+        if ends_at_full_id:
+            end_idx = _cell_index(manifest, ends_at_full_id)
+            if end_idx < start_idx:
+                click.echo("Error: --ends-at cell must be at or after --before cell.", err=True)
+                sys.exit(1)
+        else:
+            # Open-ended: effective end is next section start - 1, or last cell
+            next_starts = sorted(
+                _cell_index(manifest, s.starts_at)
+                for s in manifest.sections
+                if _cell_index(manifest, s.starts_at) > start_idx
+            )
+            end_idx = (next_starts[0] - 1) if next_starts else len(manifest.cells) - 1
+
+        _validate_no_overlap(manifest, None, start_idx, end_idx)
+
+        section = NotebookSection(
+            id=fm._generate_unique_section_id(),
+            name=name,
+            starts_at=entry.id,
+            ends_at=ends_at_full_id,
+        )
+        manifest.sections.append(section)
+        fm.save_manifest()
+        msg = f"Added section '{name}' (id={section.id}) before {entry.id}"
+        if ends_at_full_id:
+            msg += f", ends at {ends_at_full_id}"
+        click.echo(msg)
+    else:
+        # --- Update existing section's ends_at ---
+        assert ends_at_full_id is not None
+        end_idx = _cell_index(manifest, ends_at_full_id)
+
+        if name:
+            # Find by name
+            target = next((s for s in manifest.sections if s.name == name), None)
+            if target is None:
+                click.echo(f"Error: no section named '{name}'.", err=True)
+                sys.exit(1)
+        else:
+            # Empty name: find nearest preceding section
+            target = None
+            best_start = -1
+            for s in manifest.sections:
+                s_start = _cell_index(manifest, s.starts_at)
+                if s_start != -1 and s_start <= end_idx and s_start > best_start:
+                    best_start = s_start
+                    target = s
+            if target is None:
+                click.echo("Error: no section found at or before that cell.", err=True)
+                sys.exit(1)
+
+        start_idx = _cell_index(manifest, target.starts_at)
+        if end_idx < start_idx:
+            click.echo("Error: --ends-at cell must be at or after section start.", err=True)
+            sys.exit(1)
+
+        _validate_no_overlap(manifest, target.id, start_idx, end_idx)
+
+        target.ends_at = ends_at_full_id
+        fm.save_manifest()
+        click.echo(f"Updated section '{target.name}' ends_at → {ends_at_full_id}")
 
 
 @cli.command("delete-section")

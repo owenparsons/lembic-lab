@@ -36,6 +36,7 @@ export interface NotebookSection {
   id: string;
   name: string;
   starts_at: string; // cell_id
+  ends_at?: string | null; // cell_id where section ends (inclusive)
   collapsed: boolean;
 }
 

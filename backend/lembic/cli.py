@@ -623,10 +623,12 @@ def add_section(
         end_idx = _cell_index(manifest, ends_at_full_id)
 
         if name:
-            # Find by name
-            target = next((s for s in manifest.sections if s.name == name), None)
-            if target is None:
-                click.echo(f"Error: no section named '{name}'.", err=True)
+            # Find by name, ID, or prefix
+            from lembic.errors import SectionNotFoundError
+            try:
+                target = fm.get_section_entry(name)
+            except SectionNotFoundError:
+                click.echo(f"Error: no section matching '{name}'.", err=True)
                 sys.exit(1)
         else:
             # Empty name: find nearest preceding section
@@ -660,18 +662,20 @@ def add_section(
 @cli.command("delete-section")
 @click.argument("section_id")
 def delete_section(section_id: str) -> None:
-    """Remove a section divider."""
+    """Remove a section divider (by ID, prefix, or name)."""
+    from lembic.errors import SectionNotFoundError
     from lembic.services.file_manager import FileManager
 
     project_dir = Path.cwd()
     fm = FileManager(project_dir)
     manifest = fm.load_manifest()
 
-    before = len(manifest.sections)
-    manifest.sections = [s for s in manifest.sections if s.id != section_id]
-    if len(manifest.sections) == before:
-        click.echo(f"Section not found: {section_id}", err=True)
+    try:
+        section = fm.get_section_entry(section_id)
+    except SectionNotFoundError as e:
+        click.echo(str(e), err=True)
         sys.exit(1)
 
+    manifest.sections = [s for s in manifest.sections if s.id != section.id]
     fm.save_manifest()
-    click.echo(f"Deleted section {section_id}")
+    click.echo(f"Deleted section {section.id} ({section.name})")

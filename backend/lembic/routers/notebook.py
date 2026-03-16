@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from lembic.errors import SectionNotFoundError
 from lembic.models.cells import CellResponse, CellState
 from lembic.models.notebook import NotebookResponse, NotebookSection, NotebookSettings, ReorderRequest
 from lembic.server.dependencies import get_file_manager, get_state
@@ -114,11 +115,12 @@ async def delete_section(
     section_id: str,
     fm: FileManager = Depends(get_file_manager),
 ) -> dict[str, str]:
-    manifest = fm.load_manifest()
-    before = len(manifest.sections)
-    manifest.sections = [s for s in manifest.sections if s.id != section_id]
-    if len(manifest.sections) == before:
+    try:
+        section = fm.get_section_entry(section_id)
+    except SectionNotFoundError:
         raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")
+    manifest = fm.load_manifest()
+    manifest.sections = [s for s in manifest.sections if s.id != section.id]
     fm.save_manifest()
     return {"status": "ok"}
 
@@ -129,17 +131,17 @@ async def update_section(
     updates: dict,
     fm: FileManager = Depends(get_file_manager),
 ) -> NotebookSection:
-    manifest = fm.load_manifest()
-    for section in manifest.sections:
-        if section.id == section_id:
-            if "name" in updates:
-                section.name = updates["name"]
-            if "collapsed" in updates:
-                section.collapsed = updates["collapsed"]
-            if "starts_at" in updates:
-                section.starts_at = updates["starts_at"]
-            if "ends_at" in updates:
-                section.ends_at = updates["ends_at"]  # str or None to clear
-            fm.save_manifest()
-            return section
-    raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")
+    try:
+        section = fm.get_section_entry(section_id)
+    except SectionNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Section not found: {section_id}")
+    if "name" in updates:
+        section.name = updates["name"]
+    if "collapsed" in updates:
+        section.collapsed = updates["collapsed"]
+    if "starts_at" in updates:
+        section.starts_at = updates["starts_at"]
+    if "ends_at" in updates:
+        section.ends_at = updates["ends_at"]  # str or None to clear
+    fm.save_manifest()
+    return section

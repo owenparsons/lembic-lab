@@ -13,6 +13,14 @@ class CellNotFoundError(LembicError):
         super().__init__(f"Cell not found: {cell_id}")
 
 
+class SectionNotFoundError(LembicError):
+    """Raised when a section ID/name is not found in the manifest."""
+
+    def __init__(self, section_ref: str) -> None:
+        self.section_ref = section_ref
+        super().__init__(f"Section not found: {section_ref}")
+
+
 class CellFileError(LembicError):
     """Raised when a cell's source file cannot be read or written."""
 

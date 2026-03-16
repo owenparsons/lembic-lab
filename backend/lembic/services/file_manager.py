@@ -8,9 +8,9 @@ from pathlib import Path
 
 import yaml
 
-from lembic.errors import CellNotFoundError, ManifestError
+from lembic.errors import CellNotFoundError, ManifestError, SectionNotFoundError
 from lembic.models.cells import CellEntry, CellType
-from lembic.models.notebook import NotebookManifest
+from lembic.models.notebook import NotebookManifest, NotebookSection
 from lembic.services.name_generator import generate_name
 
 
@@ -96,6 +96,36 @@ class FileManager:
             return name_matches[0]
 
         raise CellNotFoundError(cell_id)
+
+    def get_section_entry(self, section_ref: str) -> NotebookSection:
+        """Get a section by full ID, prefix, or name.
+
+        Resolution order: exact ID match, then prefix match, then name match.
+        Raises SectionNotFoundError if no match, or if the match is ambiguous.
+        """
+        manifest = self.load_manifest()
+
+        # 1. Exact ID match
+        for section in manifest.sections:
+            if section.id == section_ref:
+                return section
+
+        # 2. Prefix match
+        prefix_matches = [s for s in manifest.sections if s.id.startswith(section_ref)]
+        if len(prefix_matches) == 1:
+            return prefix_matches[0]
+        if len(prefix_matches) > 1:
+            names = ", ".join(f"{s.id} ({s.name})" for s in prefix_matches)
+            raise SectionNotFoundError(
+                f"Ambiguous prefix '{section_ref}' matches multiple sections: {names}"
+            )
+
+        # 3. Name match
+        name_matches = [s for s in manifest.sections if s.name == section_ref]
+        if len(name_matches) == 1:
+            return name_matches[0]
+
+        raise SectionNotFoundError(section_ref)
 
     def _cell_path(self, entry: CellEntry) -> Path:
         """Resolve the file path for a cell entry."""

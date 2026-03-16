@@ -118,10 +118,16 @@ def add_cell(cell_type: str, name: str | None, after_id: str | None, content: st
     from lembic.models.cells import CellType
     from lembic.services.file_manager import FileManager
 
+    from lembic.errors import DuplicateNameError
+
     project_dir = Path.cwd()
     fm = FileManager(project_dir)
     ct = CellType.CODE if cell_type == "code" else CellType.MARKDOWN
-    entry = fm.create_cell(cell_type=ct, name=name, content=content, after_id=after_id)
+    try:
+        entry = fm.create_cell(cell_type=ct, name=name, content=content, after_id=after_id)
+    except DuplicateNameError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
     click.echo(f"{entry.id} {entry.name} {entry.file}")
 
 

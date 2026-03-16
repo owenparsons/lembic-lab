@@ -170,11 +170,36 @@ def move_cell(cell_id: str, after_id: str | None, to_start: bool) -> None:
 
 
 @cli.command("status")
-def status() -> None:
+@click.option("--annotations", "-a", is_flag=True, help="Show cell annotations")
+@click.option("--exec", "-e", "show_exec", is_flag=True, help="Show last execution time and duration")
+@click.option("--env", "-E", is_flag=True, help="Show environment status")
+@click.option("--checkpoints", "-c", is_flag=True, help="Show checkpoint info")
+@click.option("--changes", "-C", is_flag=True, help="Show last author and modification time")
+@click.option("--verbose", "-v", is_flag=True, help="Show all details")
+@click.option("--brief", "-b", is_flag=True, help="Minimal output: cell IDs and names only")
+def status(
+    annotations: bool,
+    show_exec: bool,
+    env: bool,
+    checkpoints: bool,
+    changes: bool,
+    verbose: bool,
+    brief: bool,
+) -> None:
     """Show notebook state: cells, execution states, and warnings."""
     from lembic.services.execution_log import ExecutionLog
     from lembic.services.file_manager import FileManager
     from lembic.services.warning_engine import compute_warnings
+
+    # --brief is mutually exclusive with detail flags and --verbose
+    detail_flags = annotations or show_exec or env or checkpoints or changes or verbose
+    if brief and detail_flags:
+        click.echo("Error: --brief cannot be combined with detail flags or --verbose.", err=True)
+        sys.exit(1)
+
+    # --verbose enables all detail flags
+    if verbose:
+        annotations = show_exec = env = checkpoints = changes = True
 
     project_dir = Path.cwd()
     fm = FileManager(project_dir)
@@ -186,6 +211,16 @@ def status() -> None:
         return
 
     log = ExecutionLog(project_dir / "execution_log.jsonl")
+
+    if brief:
+        # Brief mode: just notebook name, count, and cell list
+        click.echo(f"Notebook: {manifest.name or project_dir.name}")
+        click.echo(f"Cells: {len(manifest.cells)}")
+        click.echo()
+        for i, cell in enumerate(manifest.cells, 1):
+            click.echo(f"  {i}. [{cell.id}] {cell.name}")
+        return
+
     events = log.read_all()
     states, warnings = compute_warnings(manifest, events, fm)
 
@@ -194,6 +229,12 @@ def status() -> None:
     if manifest.sections:
         click.echo(f"Sections: {len(manifest.sections)}")
     click.echo()
+
+    # Lazily load services only when needed
+    change_log = None
+    if changes:
+        from lembic.services.change_log import ChangeLog
+        change_log = ChangeLog(project_dir / ".notebook" / "changes.jsonl")
 
     # Build a map of cell_id → section that starts at that cell
     section_starts: dict[str, list] = {}
@@ -216,11 +257,95 @@ def status() -> None:
         type_label = cell.cell_type.value
         click.echo(f"  {i}. [{cell.id}] {cell.name:<20s} ({type_label:<10s}) [{state}]")
 
+        # Per-cell detail lines
+        if annotations and cell.annotation:
+            click.echo(f"       [{cell.annotation.style}] {cell.annotation.text}")
+
+        if show_exec:
+            last_event = log.last_event_for_cell(cell.id)
+            if last_event:
+                ts = last_event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                dur = f"{last_event.duration_ms:.0f}ms"
+                result = last_event.status.value.lower()
+                click.echo(f"       Last run: {ts} ({dur}, {result})")
+
+        if changes and change_log:
+            last_change = change_log.last_change_for_cell(cell.id)
+            if last_change:
+                ts = last_change.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                author = last_change.author.value
+                click.echo(f"       Modified: {ts} by {author}")
+
+    # Summary blocks (after cell list, before warnings)
+    if env:
+        _print_env_summary(project_dir)
+
+    if checkpoints:
+        _print_checkpoint_summary(project_dir)
+
     if warnings:
         click.echo()
         click.echo("Warnings:")
         for w in warnings:
             click.echo(f"  ! {w}")
+
+
+def _print_env_summary(project_dir: Path) -> None:
+    """Print environment summary block."""
+    from lembic.services.env_manager import EnvironmentManager
+
+    em = EnvironmentManager(project_dir)
+    click.echo()
+    click.echo("Environment:")
+
+    if not em.exists:
+        click.echo("  Venv: not found")
+        return
+
+    venv_rel = em.venv_path
+    try:
+        venv_rel = em.venv_path.relative_to(project_dir)
+    except ValueError:
+        pass
+    click.echo(f"  Venv: {venv_rel}")
+
+    # Python version
+    try:
+        result = subprocess.run(
+            [str(em.python_executable), "--version"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            version = result.stdout.strip().removeprefix("Python ")
+            click.echo(f"  Python: {version}")
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    # Package count from requirements.txt
+    req_path = project_dir / "requirements.txt"
+    if req_path.exists():
+        lines = [l for l in req_path.read_text().splitlines() if l.strip() and not l.startswith("#")]
+        click.echo(f"  Packages: {len(lines)}")
+
+
+def _print_checkpoint_summary(project_dir: Path) -> None:
+    """Print checkpoint summary block."""
+    from lembic.services.checkpoint import CheckpointManager
+
+    cm = CheckpointManager(project_dir)
+    click.echo()
+
+    if not cm.is_git_repo:
+        click.echo("Checkpoints: disabled (not a git repo)")
+        return
+
+    all_cps = cm.list_checkpoints(limit=9999)
+    count = len(all_cps)
+    click.echo(f"Checkpoints: {count}")
+
+    if count > 0:
+        latest = all_cps[0]
+        click.echo(f"  Latest: {latest.hash[:8]} ({latest.timestamp})")
 
 
 # ---------------------------------------------------------------------------
